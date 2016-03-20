@@ -41,14 +41,14 @@ class Page:
     folder. At minimum a page should have a body, title, and slug so it can be
     rendered. However, a page may have additional metadata like date or tags.
     """
-    metadata = ["tags", "date", "title", "slug"]
+    metadata = ["tags", "date", "title", "slug", "template"]
     metadelimiter = "++++"
 
     def __init__(self, filepath):
         # These are set when the page is initialized (step 1)
         self.filepath = os.path.normpath(filepath)  # This is the path of the file relative to content
         self.folder = self._get_folder()  # This is the leading part of the URL
-        self.slug = self._get_slug()      # This is the final part of the URL
+        self.slug = self._get_default_slug()      # This is the final part of the URL
         self.ext = self._get_extension()  # This is the extension (markdown or html)
 
         # These maybe set when the page is parsed for metadata (step 2)
@@ -69,7 +69,7 @@ class Page:
     def _get_folder(self):
         return os.path.dirname(self.filepath)
 
-    def _get_slug(self):
+    def _get_default_slug(self):
         """
         Get the slug for this page, which is used for the final part of the URL
         path. For a file like cakes/chocolate.html this will be "chocolate". If
@@ -89,29 +89,26 @@ class Page:
         """
         return os.path.splitext(self.filepath)[1]
 
-    def get_target(self):
-        """
-        Get the path for this page. This is the containing path + slug. Something
-        like cakes/chocolate.html will become cakes/chocolate/index.html
-        """
-        # Note that we may have customized slug so we should only run this after
-        # metadata has been parsed.
-        if not self.parsed:
-            raise RuntimeError("This should not be called before metadata is parsed")
-
-        output_filename = os.path.normpath(self._get_folder() + self._get_slug() + self.ext)
-
-        if page.ext in [".html", ".md", ".markdown"]:
-            output_filename = os.path.normpath(os.path.join(self.root, "output", page._get_url(), "index.html"))
-
-        return os.path.normpath(os.path.join(self._get_folder(), self._get_slug()))
-
     def _get_url(self):
         """
         Get the url for this page, based on its filepath. This is path + slug.
         Something like cakes/chocolate.html will become /cakes/chocolate/
         """
         return '/%s/' % (self.folder + self.slug)
+
+    def get_target(self):
+        """
+        Get the target filename for this page. This is the containing folder +
+        slug, which may have been customized.
+        """
+        # Note that we may have customized slug so we should only run this after
+        # metadata has been parsed.
+        if not self.parsed:
+            raise RuntimeError("This should not be called before metadata is parsed")
+        output_filename = os.path.normpath(os.path.join(self.folder, self.slug + self.ext))
+        if self.ext in [".html", ".md", ".markdown"]:
+            output_filename = os.path.normpath(os.path.join(self.folder, self.slug, "index.html"))
+        return output_filename
 
     def render(self, site):
         """
@@ -147,6 +144,10 @@ class Page:
                     value = value.split(" ")
                 else:
                     value = []
+            # If we have a default metadata value and the user did not override
+            # it, leave it alone
+            if value is None and getattr(self, key, None) is not None:
+                continue
             setattr(self, key, value)
             if value == None:
                 logging.warning("Metadata '%s' not specified in %s", key,
