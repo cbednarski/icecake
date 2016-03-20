@@ -1,5 +1,6 @@
 import pytest
 import icecake
+import jinja2
 
 class TestPage:
     def test_basic(self):
@@ -55,3 +56,40 @@ slug = some-title
         page.parse_metadata(meta)
         assert page._get_folder() == "this/file/does/not"
         assert page.get_target() == "this/file/does/not/some-title/index.html"
+
+    def test_parse_string(self):
+        raw = """
+title = My Title
+date = 2013-01-02
+tags = pie
+++++
+
+# This is the beginning of my page!
+        """
+
+        page = icecake.Page.parse_string("this/file/does/not/exist.md", raw)
+        assert page.body == "# This is the beginning of my page!"
+
+    def test_render(self):
+        site = icecake.Site()
+        site.renderer = jinja2.Environment(loader=jinja2.DictLoader({
+            "markdown.html":"MARKDOWN{{title}}{{content}}",
+            "basic.html":"HTML{{content}}",
+            "just.html":"Waka"
+            }))
+
+        page = icecake.Page("filename.md")
+        page.parse_metadata("title=My Title")
+        page.body="#This is awesome!"
+        assert page.render(site) == "MARKDOWNMy Title<h1>This is awesome!</h1>"
+
+        page.template="basic.html"
+        assert page.render(site) == "HTML<h1>This is awesome!</h1>"
+
+        # This case is a bit odd. We don't actually use the page content we
+        # parsed, we just let Jinja find the template on disk and render it
+        # as-is. This is inconsistent from the markdown case, but works. There
+        # may be some opportunity to clean up the API here and remove body or
+        # content since only one is actually used.
+        page = icecake.Page("just.html")
+        assert page.render(site) == "Waka"

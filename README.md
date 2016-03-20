@@ -114,13 +114,13 @@ These metadata are important not just to make your page display correctly, but a
 
 ### Rendering Metadata
 
-Whenever you are writing a template the current page's metadata is available via `page`, so you can show the page title via `{{ page.title }}` or the publish date via `{{ page.date }}`. You can also write `if` statements that reference this information.
+Whenever you are writing a template the current page's metadata are available via their names, so you can show the page title via `{{ title }}` or the publish date via `{{ date }}`. You can also write `if` statements that reference this information.
 
 To show a list of tags for your page you can write something like this:
 
 ```
 <p>Tagged
-{% for tag in page.tags %}
+{% for tag in tags %}
     <span class="tag">{{ tag }}</span>
 {% endfor %}
 </p>
@@ -161,7 +161,7 @@ You can use this to create a blog index page, for example:
 
 ```
 {% for page in find.pages(tag="blog", order="title") %}
-    <a href="{{ page.url }}">{{ page.title }}</a>
+    <a href="{{ url }}">{{ title }}</a>
 {% endfor %}
 ```
 
@@ -169,7 +169,7 @@ You can use this to create a blog index page, for example:
 
 ```
 {% for page in find.pages(path="articles/", order="-date", limit=5) %}
-    <a href="{{ page.url }}">{{ page.title }}</a>
+    <a href="{{ url }}">{{ title }}</a>
 {% endfor %}
 ```
 
@@ -193,7 +193,7 @@ You can use `find.tags` to list all of the tags in use on your site. You cannot 
 {% endfor %}
 ```
 
-Don't confuse this with `page.tags`!
+Don't confuse this with `tags`!
 
 ## Questions? Problems?
 

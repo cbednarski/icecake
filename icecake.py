@@ -127,7 +127,7 @@ class Page:
         else:
             template = site.renderer.get_template(self.filepath)
 
-        self.rendered = template.render(page=self, find=site.finder)
+        self.rendered = template.render(self.__dict__, find=site.finder)
         return self.rendered
 
     def parse_metadata(self, text):
@@ -176,9 +176,9 @@ class Page:
 
         if len(parts) == 2:
             page.parse_metadata(parts[0])
-            page.body = parts[1]
+            page.body = parts[1].strip()
         else:
-            page.body = parts[0]
+            page.body = parts[0].strip()
             logging.warning("No metadata detected; expected %s separator %s",
                             cls.metadelimiter, page.filepath)
         return page
