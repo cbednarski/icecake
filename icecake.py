@@ -21,6 +21,7 @@ import os
 # 2/3 compat
 if platform.python_version_tuple()[0] == '2':
     import ConfigParser as configparser
+    import io
 else:
     import configparser
 
@@ -136,9 +137,19 @@ class Page:
         logging.debug("Parsing metadata %s", text)
         text = "[Metadata]\n" + text
         parser = configparser.ConfigParser()
-        parser.read_string(text)
+        if platform.python_version_tuple()[0] == '2':
+            parser.readfp(io.StringIO(text))
+        else:
+            parser.read_string(text)
+
+        # This is super ugly because of 2/3 compat
+        values = {}
+        for k, v in parser.items("Metadata"):
+            values[k] = v
         for key in self.metadata:
-            value = parser["Metadata"].get(key, None)
+            value = None
+            if key in values:
+                value = values[key]
             if key == "tags":
                 if value is not None:
                     value = value.split(" ")

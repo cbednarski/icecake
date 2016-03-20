@@ -15,11 +15,11 @@ class TestPage:
 
     def test_parse_metadata(self):
         meta = """
-        title = Some title
-        date = 2013-01-02
-        tags = pie cake chocolate
-        slug = some-title
-        template = myfile.html
+title = Some title
+date = 2013-01-02
+tags = pie cake chocolate
+slug = some-title
+template = myfile.html
         """
 
         page = icecake.Page("this/file/does/not/exist.html")
@@ -49,7 +49,7 @@ class TestPage:
 
         # Test customized slug case
         meta = """
-        slug = some-title
+slug = some-title
         """
         page = icecake.Page("this/file/does/not/exist.md")
         page.parse_metadata(meta)
