@@ -127,7 +127,7 @@ class Page:
         else:
             template = site.renderer.get_template(self.filepath)
 
-        self.rendered = template.render(self.__dict__, find=site.finder)
+        self.rendered = template.render(self.__dict__, site=site)
         return self.rendered
 
     def parse_metadata(self, text):
@@ -181,6 +181,8 @@ class Page:
             page.body = parts[0].strip()
             logging.warning("No metadata detected; expected %s separator %s",
                             cls.metadelimiter, page.filepath)
+            # Say we already parsed the metadata
+            page.parsed=True
         return page
 
     @classmethod
@@ -194,20 +196,103 @@ class Page:
         return page
 
 
-class Finder:
+class Site:
     """
-    Finder collects all of your pages and tags so you can show lists of
-    articles, tags, or generate atom feeds.
-    """
-    def __init__(self):
-        self.items = []
+    A site represents a collection of source files arranged under the following
+    project structure:
 
-    def all(self):
-        return self.items
+    ├── content
+    ├── layouts
+    ├── static
+    └── output
+
+    Content represent pages on your site. Each page will be built into a
+    corresponding file in your output directory. Layout files are used for
+    shared templates but do not have a corresponding page in output. Files under
+    static are copied directly, and is a good place to put images, css, and
+    javascript.
+
+    Methods on this class deal with configuration, discovering content and
+    building your site.
+    """
+
+    def __init__(self, root=None):
+        """
+        Keyword Arguments:
+        root -- The path to the static site folder which includes the pages,
+                layouts, and static folders.
+        """
+        self.root = root
+        self.markdown_plugins = ["markdown.extensions.fenced_code", "markdown.extensions.codehilite"]
+        self.renderer = jinja2.Environment(loader=jinja2.FileSystemLoader([os.path.abspath("content"), os.path.abspath("layouts")]))
+        self.pagedata = []
+
+    def getpages(self):
+        """
+        Enumerate and parse all the page files in the static site.
+        """
+        logging.debug("Getting pages")
+        content_dir = os.path.join(self.root, "content")
+        curdir = os.getcwd()
+        os.chdir(content_dir)
+        files = self.list_files(".")
+        for file in files:
+            if not os.path.isdir(file):
+                logging.debug("Parsing %s", file)
+                page = Page.parse_file(file)
+                page.render(self)
+                self.pagedata.append(page)
+        os.chdir(curdir)
+        return self.pagedata
+
+    def copystatic(self):
+        logging.debug("Copying static files")
+        static_dir = os.path.abspath(os.path.join(self.root, "static"))
+        entries = os.walk(static_dir)
+        for path, dirs, files in entries:
+            for file in files:
+                source_path = os.path.join(path, file)
+                source_file = "." + source_path.replace(static_dir, "")
+                output_file = os.path.normpath(os.path.join(self.root, "output", source_file))
+                if os.path.isdir(source_path):
+                    continue
+                logging.debug("Copying static file %s", output_file)
+                output_path = os.path.normpath(os.path.dirname(output_file))
+
+                if not os.path.exists(output_path):
+                    logging.debug("Making directory %s", output_path)
+                    os.makedirs(output_path, mode=0o755)
+                contents = open(source_path, "rb").read()
+                open(output_file, "wb").write(contents)
+
+    def build(self):
+        """
+        Build the site. This method originates all of the calls to discover,
+        render, and place pages in the output directory. If you want to
+        customize how your site is built, this is a good place to start.
+        """
+        template_path = os.path.join(self.root, "layouts")
+        logging.debug("Loading templates from %s", template_path)
+        templates = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(template_path))
+
+        self.pagedata = self.getpages()
+        for page in self.pagedata:
+            output_filename = os.path.join("output", page.get_target())
+            logging.debug("Preparing to write %s", output_filename)
+            output_path = os.path.dirname(output_filename)
+            if not os.path.exists(output_path):
+                logging.debug("Making directory %s", output_path)
+                os.makedirs(output_path, mode=0o755)
+
+            open(output_filename, mode="w").write(page.render(self))
+            logging.info("Wrote \"%s\" (%s)", page.title, page.filepath)
+
+        self.copystatic()
 
     def tags(self):
         tagnames = set()
-        for page in self.items:
+        for page in self.pagedata:
             if page.tags:
                 tagnames = tagnames.union(set(page.tags))
         taglist = list(tagnames)
@@ -223,7 +308,7 @@ class Finder:
         finder.pages(path="articles", limit=5, order="-date")
         finder.pages(tag="family", order="title")
         """
-        items = self.items
+        items = self.pagedata
         if path is not None:
             items = [page for page in items if page.filepath.startswith(path)]
         if tag is not None:
@@ -257,103 +342,6 @@ class Finder:
         return atom.to_string()
 
 
-class Site:
-    """
-    A site represents a collection of source files arranged under the following
-    project structure:
-
-    ├── content
-    ├── layouts
-    ├── static
-    └── output
-
-    Content represent pages on your site. Each page will be built into a
-    corresponding file in your output directory. Layout files are used for
-    shared templates but do not have a corresponding page in output. Files under
-    static are copied directly, and is a good place to put images, css, and
-    javascript.
-
-    Methods on this class deal with configuration, discovering content and
-    building your site.
-    """
-
-    def __init__(self, root=None):
-        """
-        Keyword Arguments:
-        root -- The path to the static site folder which includes the pages,
-                layouts, and static folders.
-        """
-        self.root = root
-        self.markdown_plugins = ["markdown.extensions.fenced_code", "markdown.extensions.codehilite"]
-        self.renderer = jinja2.Environment(loader=jinja2.FileSystemLoader([os.path.abspath("content"), os.path.abspath("layouts")]))
-        self.finder = Finder()
-
-    def getpages(self):
-        """
-        Enumerate and parse all the page files in the static site.
-        """
-        logging.debug("Getting pages")
-        content_dir = os.path.join(self.root, "content")
-        curdir = os.getcwd()
-        os.chdir(content_dir)
-        files = self.list_files(".")
-        pages = []
-        for file in files:
-            if not os.path.isdir(file):
-                logging.debug("Parsing %s", file)
-                page = Page.parse_file(file)
-                pages.append(page)
-        os.chdir(curdir)
-        self.finder.items = pages
-        return pages
-
-    def copystatic(self):
-        logging.debug("Copying static files")
-        static_dir = os.path.abspath(os.path.join(self.root, "static"))
-        entries = os.walk(static_dir)
-        for path, dirs, files in entries:
-            for file in files:
-                source_path = os.path.join(path, file)
-                source_file = "." + source_path.replace(static_dir, "")
-                output_file = os.path.normpath(os.path.join(self.root, "output", source_file))
-                if os.path.isdir(source_path):
-                    continue
-                logging.debug("Copying static file %s", output_file)
-                output_path = os.path.normpath(os.path.dirname(output_file))
-
-                if not os.path.exists(output_path):
-                    logging.debug("Making directory %s", output_path)
-                    os.makedirs(output_path, mode=0o755)
-                contents = open(source_path, "rb").read()
-                open(output_file, "wb").write(contents)
-
-    def build(self):
-        """
-        Build the site. This method originates all of the calls to discover,
-        render, and place pages in the output directory. If you want to
-        customize how your site is built, this is a good place to start.
-        """
-        template_path = os.path.join(self.root, "layouts")
-        logging.debug("Loading templates from %s", template_path)
-        templates = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(template_path))
-
-        pages = self.getpages()
-        for page in pages:
-            output_filename = os.path.normpath(os.path.join(self.root, "output", page._get_url()+page.ext))
-            if page.ext in [".html", ".md", ".markdown"]:
-                output_filename = os.path.normpath(os.path.join(self.root, "output", page._get_url(), "index.html"))
-            logging.debug("Preparing to write %s", output_filename)
-            output_path = os.path.dirname(output_filename)
-            if not os.path.exists(output_path):
-                logging.debug("Making directory %s", output_path)
-                os.makedirs(output_path, mode=0o755)
-
-            open(output_filename, mode="w").write(page.render(self))
-            logging.info("Wrote \"%s\" (%s)", page.title, page.filepath)
-
-        self.copystatic()
-
     @classmethod
     def list_files(cls, list_path):
         found = []
@@ -369,18 +357,25 @@ def cli():
 
 
 @cli.command()
-def init():
-    pass
+@click.option("--debug/--no-debug", default=False)
+def init(debug):
+    if debug:
+        logging.getLogger().setLevel(logging.DEBUG)
 
 
 @cli.command()
-def build():
+@click.option("--debug/--no-debug", default=False)
+def build(debug):
+    if debug:
+        logging.getLogger().setLevel(logging.DEBUG)
     Site(os.path.abspath(os.getcwd())).build()
 
 
 @cli.command()
-def preview():
-    pass
+@click.option("--debug/--no-debug", default=False)
+def preview(debug):
+    if debug:
+        logging.getLogger().setLevel(logging.DEBUG)
 
 
 if __name__ == "__main__":
