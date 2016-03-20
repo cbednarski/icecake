@@ -1,10 +1,9 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
-    name="icecake",
-    version="0.1",
-    packages=find_packages(),
-    include_package_data=True,
+    name='icecake',
+    version='0.1',
+    py_modules=['icecake'],
     install_requires=[
         'Click',
         'Jinja2',
@@ -13,8 +12,8 @@ setup(
         'python-dateutil',
         'Werkzeug',
     ],
-    entry_points="""
+    entry_points='''
         [console_scripts]
         icecake=icecake:cli
-    """
+    '''
 )
