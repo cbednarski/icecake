@@ -99,7 +99,7 @@ class Page:
         if not self.parsed:
             raise RuntimeError("This should not be called before metadata is parsed")
 
-        output_filename = os.path.normpath(self._get_url() + self.ext)
+        output_filename = os.path.normpath(self._get_folder() + self._get_slug() + self.ext)
 
         if page.ext in [".html", ".md", ".markdown"]:
             output_filename = os.path.normpath(os.path.join(self.root, "output", page._get_url(), "index.html"))
@@ -111,7 +111,7 @@ class Page:
         Get the url for this page, based on its filepath. This is path + slug.
         Something like cakes/chocolate.html will become /cakes/chocolate/
         """
-        return '/%s/' % self.get_target()
+        return '/%s/' % (self.folder + self.slug)
 
     def render(self, site):
         """
@@ -292,7 +292,7 @@ class Site:
                 page = Page.parse_file(file)
                 pages.append(page)
         os.chdir(curdir)
-        self.pages.items = pages
+        self.finder.items = pages
         return pages
 
     def copystatic(self):

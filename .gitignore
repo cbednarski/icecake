@@ -1,4 +1,5 @@
+.cache
 __pycache__
-*.egg-info
 venv
+*.egg-info
 *.pyc

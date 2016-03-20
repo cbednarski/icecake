@@ -4,6 +4,8 @@ A cool and easy static site builder.
 
 Jinja templates. Markdown. Pygments source code higlighting. Blog-aware. Atom feeds. Live preview. Clean URLs. MIT license. Minimal design.
 
+[![Build Status](https://travis-ci.org/cbednarski/icecake.svg?branch=master)](https://travis-ci.org/cbednarski/icecake)
+
 ## Designed for Simplicity
 
 Icecake aims to be simple. It has a simple license. It does not support lots of features. For example, it does not support plugins, themes, different templating backends, or any of a long list of other features.
