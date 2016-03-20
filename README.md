@@ -192,3 +192,7 @@ You can use `find.tags` to list all of the tags in use on your site. You cannot 
 ```
 
 Don't confuse this with `page.tags`!
+
+## Questions? Problems?
+
+Open an issue! https://github.com/cbednarski/icecake/issues
