@@ -41,7 +41,7 @@ template = myfile.html
         assert page.get_target() == "this/file/does/not/exist/index.html"
         assert page.url == "/this/file/does/not/exist/"
 
-        # Test html / markdown case
+        # Test not html / markdown case
         page = icecake.Page("this/file/does/not/exist.css")
         page.parse_metadata("")
         assert page.get_target() == "this/file/does/not/exist.css"
