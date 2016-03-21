@@ -47,10 +47,18 @@ class Page:
 
     def __init__(self, filepath):
         # These are set when the page is initialized (step 1)
+        self.parsed = False  # This is a special flag that helps us avoid bugs
         self.filepath = os.path.normpath(filepath)  # This is the path of the file relative to content
-        self.folder = self._get_folder()  # This is the leading part of the URL
-        self.slug = self._get_default_slug()      # This is the final part of the URL
-        self.ext = self._get_extension()  # This is the extension (markdown or html)
+        self.folder = self._get_folder()     # This is the leading part of the URL
+        self.slug = self._get_default_slug() # This is the final part of the URL
+        self.ext = self._get_extension()     # This is the extension (markdown or html)
+
+        # Note! We are going to evaluate this now to make sure it is always
+        # evaluated. However, we will evaluate this again after the metadata is
+        # parsed in case the user specifies a custom slug, which will change the
+        # url. This way, though, we always have url defined even for pages
+        # without metadata.
+        self.url = self._get_url()           # This is the URL path
 
         # These maybe set when the page is parsed for metadata (step 2)
         self.date = None     # This is the date the page was published
@@ -58,9 +66,6 @@ class Page:
         self.template = None # This is the template we'll use to render the page
         self.title = None    # This is the title of the page
 
-        # These are always set when the page is parsed for metadata (step 2)
-        self.parsed = False
-        self.url = None      # This is the full, final URL path
 
         # These are set when the page is rendered (step 3)
         self.body = None      # This is the raw body of the page
@@ -95,7 +100,9 @@ class Page:
         Get the url for this page, based on its filepath. This is path + slug.
         Something like cakes/chocolate.html will become /cakes/chocolate/
         """
-        return '/%s/' % (self.folder + self.slug)
+        if self.ext in [".html", ".md", ".markdown"]:
+            return '/%s/' % os.path.normpath(os.path.join(self.folder, self.slug))
+        return '/%s' % os.path.join(self.folder, self.slug + self.ext)
 
     def get_target(self):
         """
@@ -106,10 +113,71 @@ class Page:
         # metadata has been parsed.
         if not self.parsed:
             raise RuntimeError("This should not be called before metadata is parsed")
-        output_filename = os.path.normpath(os.path.join(self.folder, self.slug + self.ext))
+        # If we find a .html or .md we will use .html instead, and will convert
+        # the name to a folder containing index.html so we get a clean URL.
         if self.ext in [".html", ".md", ".markdown"]:
-            output_filename = os.path.normpath(os.path.join(self.folder, self.slug, "index.html"))
-        return output_filename
+            return os.path.normpath(os.path.join(self.folder, self.slug, "index.html"))
+        # We default to path/name.extension in case there is a file like CSS or
+        # XML where the filename is important.
+        return os.path.normpath(os.path.join(self.folder, self.slug + self.ext))
+
+    def parse_metadata(self, text):
+        """
+        Parse a metadata string into object properties tags, date, title, etc.
+        """
+        logging.debug("Parsing metadata %s", text)
+        text = "[Metadata]\n" + text
+        parser = configparser.ConfigParser()
+        if platform.python_version_tuple()[0] == '2':
+            parser.readfp(io.StringIO(text))
+        else:
+            parser.read_string(text)
+
+        # This is super ugly because of 2/3 compat. There's probably a cleaner
+        # way to factor this code.
+        values = {}
+        for k, v in parser.items("Metadata"):
+            values[k] = v
+        for key in self.metadata:
+            value = None
+            if key in values:
+                value = values[key]
+            if key == "tags":
+                if value is not None:
+                    value = value.split(" ")
+                else:
+                    value = []
+            # If we have a default metadata value and the user did not override
+            # it, leave it alone. Currently this only applies to slug, which has
+            # a default based on the filepath.
+            if value is None and getattr(self, key, None) is not None:
+                continue
+            setattr(self, key, value)
+            if value == None:
+                logging.warning("Metadata '%s' not specified in %s", key,
+                                self.filepath)
+        self.url = self._get_url()
+        self.parsed = True
+
+    @classmethod
+    def parse_string(cls, filepath, text):
+        """
+        Parse a raw string and separate the front matter so we can turn it into
+        a page object with metadata and body.
+        """
+        page = cls(filepath)
+        parts = text.split(cls.metadelimiter, 1)
+
+        if len(parts) == 2:
+            page.parse_metadata(parts[0].strip())
+            page.body = parts[1].strip()
+        else:
+            page.body = parts[0].strip()
+            logging.warning("No metadata detected; expected %s separator %s",
+                            cls.metadelimiter, page.filepath)
+            # Say we already parsed the metadata
+            page.parsed=True
+        return page
 
     def render(self, site):
         """
@@ -126,64 +194,8 @@ class Page:
                 template = site.renderer.get_template("markdown.html")
         else:
             template = site.renderer.get_template(self.filepath)
-
         self.rendered = template.render(self.__dict__, site=site)
         return self.rendered
-
-    def parse_metadata(self, text):
-        """
-        Parse a metadata string into object properties tags, date, title, etc.
-        """
-        logging.debug("Parsing metadata %s", text)
-        text = "[Metadata]\n" + text
-        parser = configparser.ConfigParser()
-        if platform.python_version_tuple()[0] == '2':
-            parser.readfp(io.StringIO(text))
-        else:
-            parser.read_string(text)
-
-        # This is super ugly because of 2/3 compat
-        values = {}
-        for k, v in parser.items("Metadata"):
-            values[k] = v
-        for key in self.metadata:
-            value = None
-            if key in values:
-                value = values[key]
-            if key == "tags":
-                if value is not None:
-                    value = value.split(" ")
-                else:
-                    value = []
-            # If we have a default metadata value and the user did not override
-            # it, leave it alone
-            if value is None and getattr(self, key, None) is not None:
-                continue
-            setattr(self, key, value)
-            if value == None:
-                logging.warning("Metadata '%s' not specified in %s", key,
-                                self.filepath)
-        self.parsed = True
-
-    @classmethod
-    def parse_string(cls, filepath, text):
-        """
-        Parse a raw string and separate the front matter so we can turn it into
-        a page object with metadata and body.
-        """
-        page = cls(filepath)
-        parts = text.split(cls.metadelimiter, 1)
-
-        if len(parts) == 2:
-            page.parse_metadata(parts[0])
-            page.body = parts[1].strip()
-        else:
-            page.body = parts[0].strip()
-            logging.warning("No metadata detected; expected %s separator %s",
-                            cls.metadelimiter, page.filepath)
-            # Say we already parsed the metadata
-            page.parsed=True
-        return page
 
     @classmethod
     def parse_file(cls, filepath):
@@ -192,7 +204,6 @@ class Page:
         """
         text = open(filepath).read()
         page = cls.parse_string(filepath, text)
-
         return page
 
 
@@ -340,7 +351,6 @@ class Site:
                      updated=dateparse(item.date),
                      xml_base=None)
         return atom.to_string()
-
 
     @classmethod
     def list_files(cls, list_path):

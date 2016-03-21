@@ -3,13 +3,14 @@ import icecake
 import jinja2
 
 class TestPage:
-    def test_basic(self):
+    def test_init(self):
         page = icecake.Page("this/file/does/not/exist.html")
         assert page.slug == "exist"
         assert page.folder == "this/file/does/not"
         assert page.ext == ".html"
+        assert page.url == "/this/file/does/not/exist/"
 
-    def test_basic(self):
+    def test_parse_checker(self):
         with pytest.raises(RuntimeError):
             page = icecake.Page("this/file/does/not/exist.html")
             page.get_target()
@@ -31,22 +32,26 @@ template = myfile.html
         assert page.tags == ['pie', 'cake', 'chocolate']
         assert page.slug == "some-title"
         assert page.template == "myfile.html"
+        assert page.url == "/this/file/does/not/some-title/"
 
     def test_get_target(self):
         # Test basic case
         page = icecake.Page("this/file/does/not/exist.html")
         page.parse_metadata("")
         assert page.get_target() == "this/file/does/not/exist/index.html"
+        assert page.url == "/this/file/does/not/exist/"
 
         # Test html / markdown case
         page = icecake.Page("this/file/does/not/exist.css")
         page.parse_metadata("")
         assert page.get_target() == "this/file/does/not/exist.css"
+        assert page.url == "/this/file/does/not/exist.css"
 
         # Test index case
         page = icecake.Page("this/file/does/not/index.md")
         page.parse_metadata("")
         assert page.get_target() == "this/file/does/not/index.html"
+        assert page.url == "/this/file/does/not/"
 
         # Test customized slug case
         meta = """
@@ -56,6 +61,7 @@ slug = some-title
         page.parse_metadata(meta)
         assert page._get_folder() == "this/file/does/not"
         assert page.get_target() == "this/file/does/not/some-title/index.html"
+        assert page.url == "/this/file/does/not/some-title/"
 
     def test_parse_string(self):
         raw = """
