@@ -77,7 +77,7 @@ tags = pie
         assert page.body == "# This is the beginning of my page!"
 
     def test_render(self):
-        site = icecake.Site()
+        site = icecake.Site(".")
         site.renderer = jinja2.Environment(loader=jinja2.DictLoader({
             "markdown.html":"MARKDOWN{{title}}{{content}}",
             "basic.html":"HTML{{content}}",
