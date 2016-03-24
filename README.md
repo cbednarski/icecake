@@ -187,7 +187,19 @@ You can use `site.atom` to create an Atom feed for specific pages on your site. 
 
 Unlike `site.pages` the atom feed is simply printed out -- you don't need to iterate over it.
 
-    {{ site.atom(path="articles/", order="-date") }}
+    {{
+      site.atom(
+        path="articles/",
+        order="-date",
+        site_url="http://example.com",
+        feed_url="http://example.com"+url,
+        feed_title="My Blog",
+        feed_subtitle=None,
+        author="Me!"
+      )
+    }}
+
+Obviously you should fill in your name and site URL above. Note that most of these options are required in order for the feed to work correctly, but if you want to skip one you can specify `None` as the value. Also, you can use `"https://yoursite"+url` to automatically set the feed URL to point to the current page.
 
 ## Listing Tags
 

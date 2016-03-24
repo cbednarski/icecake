@@ -334,19 +334,20 @@ class Site:
             items = items[:limit]
         return items
 
-    def atom(self, *args, **kwargs):
+    def atom(self, feed_title, feed_url, feed_subtitle, site_url, author, *args, **kwargs):
         items = self.pages(*args, **kwargs)
 
-        atom = AtomFeed(title="Chris Bednarski", feed_url="https://cbednarski.com/atom.xml",
-                    url="https://cbednarski.com/",
-                    subtitle="Chris Bednarski")
+        atom = AtomFeed(title=feed_title,
+                        subtitle=feed_subtitle,
+                        feed_url=feed_url,
+                        url=site_url)
         for item in items:
             item.render(Site("."))
             atom.add(title=item.title,
                      content=item.content,
                      content_type='html',
-                     author="Chris Bednarski",
-                     url="https://cbednarski.com"+item.url,
+                     author=author,
+                     url=site_url+item.url,
                      published=dateparse(item.date),
                      updated=dateparse(item.date),
                      xml_base=None)
