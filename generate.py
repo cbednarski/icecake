@@ -1,11 +1,16 @@
+import os
+
+
 import icecake
+
 
 def generate():
 
     output = 'templates = {\n'
     for source_filename in icecake.Site.list_files('templates'):
         contents = open(source_filename).read()
-        output += '"%s":\n' % source_filename
+        target_filename = os.path.relpath(source_filename, 'templates')
+        output += '"%s":\n' % target_filename
         output += '"""' + contents + '""",\n'
     output += '}'
 

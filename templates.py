@@ -1,5 +1,5 @@
 templates = {
-"templates/content/articles.html":
+"content/articles.html":
 """{% extends "basic.html" %}
 
 {% block title %}Articles :: My Site.com{% endblock %}
@@ -20,7 +20,7 @@ templates = {
 
 {% endblock %}
 """,
-"templates/content/atom.xml":
+"content/atom.xml":
 """{{
   site.atom(
     path="articles/",
@@ -32,7 +32,7 @@ templates = {
     author="a smart person"
   )
 }}""",
-"templates/content/index.html":
+"content/index.html":
 """{% extends "basic.html" %}
 
 {% block title %}My Site.com{% endblock %}
@@ -60,7 +60,7 @@ templates = {
 
 {% endblock %}
 """,
-"templates/content/tags.html":
+"content/tags.html":
 """{% extends "basic.html" %}
 
 {% block title %}My Site.com{% endblock %}
@@ -84,7 +84,7 @@ templates = {
 
 {% endblock %}
 """,
-"templates/content/articles/hello-world.md":
+"content/articles/hello-world.md":
 """title = Hello world!
 date = 2016-04-02
 tags = hello
@@ -105,7 +105,7 @@ And this is a list:
 ```
 
 That's all for now!""",
-"templates/layouts/basic.html":
+"layouts/basic.html":
 """<!DOCTYPE html>
 <head>
   <title>{% block title %}{{ title }} :: My Site.com{% endblock %}</title>
@@ -132,7 +132,7 @@ That's all for now!""",
 </body>
 </html>
 """,
-"templates/layouts/markdown.html":
+"layouts/markdown.html":
 """{% extends "basic.html" %}
 
 {% block title %}{{ title }} :: My Site.com{% endblock %}
@@ -159,7 +159,7 @@ That's all for now!""",
 
 {% endblock %}
 """,
-"templates/static/css/main.css":
+"static/css/main.css":
 """body {
     background-color: #05b3e3;
     color: #000;
@@ -386,7 +386,7 @@ ul.articles li, .tag-block li {
     border-bottom: 1px solid #000;
 }
 """,
-"templates/static/css/syntax.css":
+"static/css/syntax.css":
 """.codehilite .hll { background-color: #ffffcc }
 .codehilite .c { color: #0099FF; font-style: italic } /* Comment */
 .codehilite .err { color: #AA0000; background-color: #FFAAAA } /* Error */
