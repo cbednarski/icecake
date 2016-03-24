@@ -1,0 +1,11 @@
+{{
+  site.atom(
+    path="articles/",
+    order="-date",
+    site_url="https://example.com",
+    feed_url="https://example.com"+url,
+    feed_title="My Site",
+    feed_subtitle=None,
+    author="a smart person"
+  )
+}}

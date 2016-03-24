@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<head>
+  <title>{% block title %}{{ title }} :: My Site.com{% endblock %}</title>
+  <link href="/css/main.css" rel="stylesheet" />
+  <link href="/css/syntax.css" rel="stylesheet" />
+  <link href="/atom.xml" rel="alternate" type="application/atom+xml" title="My Site" />
+  <link href="//fonts.googleapis.com/css?family=Domine:400,700" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<nav id="main-nav">
+  <a href="/">My Site</a>
+  <a href="/articles/">Articles</a>
+</nav>
+
+<section id="main-content">
+{% block content %}{% endblock %}
+</section>
+
+<footer id="main-footer">
+  <p>Copyright &copy; 2016 A Smart Person. All rights reserved. | Proudly built with <a href="https://github.com/cbednarski/icecake">Icecake</a></p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,19 @@
+{% extends "basic.html" %}
+
+{% block title %}Articles :: My Site.com{% endblock %}
+
+{% block content %}
+
+<div class="article">
+
+<h1>Articles</h1>
+
+<ul class="articles">
+{% for page in site.pages(path="articles/", order="-date") %}
+	<li><a href="{{ page.url }}">{{ page.title }}</a></li>
+{% endfor %}
+</ul>
+
+</div>
+
+{% endblock %}

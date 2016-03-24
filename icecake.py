@@ -356,6 +356,9 @@ class Site:
     @classmethod
     def list_files(cls, list_path):
         found = []
+        # Guard against dir doesn't exist
+        if not os.path.isdir(list_path):
+            return found
         for path, dirs, files in os.walk(list_path):
             for file in files:
                 found.append(os.path.join(path, file))
@@ -363,18 +366,25 @@ class Site:
 
 
 class Initializer:
-    templates = {
-    }
-
     def __init__(self, root):
         self.root = root
 
     def init(self):
-        for path, content in enumerate(self.templates):
-            target = os.path.join(self.root, path)
+        if not os.path.isdir(self.root):
+            os.makedirs(self.root)
+        templates_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+        for source_path in Site.list_files(templates_path):
+            source_filename = os.path.relpath(source_path, templates_path)
+            contents = open(source_path).read()
+            target = os.path.join(self.root, source_filename)
+
+            target_dir = os.path.dirname(target)
+            if not os.path.isdir(target_dir):
+                os.makedirs(target_dir)
+
             with open(target, mode="w") as f:
                 logging.info("Writing %s" % target)
-                f.write(content)
+                f.write(contents)
                 f.close()
 
     def is_dirty(self):
@@ -405,9 +415,12 @@ def cli():
 def init(debug, f, path):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
-    i = Initializer(os.path.abspath(os.getcwd()))
+    i = Initializer(path)
     if i.is_dirty() and not f:
         click.echo("Path \"%s\" already contains files; use -f to force initialization" % path)
+        logging.debug("Found:")
+        for file in Site.list_files(path):
+            logging.debug(file)
         exit(1)
     i.init()
 

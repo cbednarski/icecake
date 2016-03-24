@@ -1,0 +1,225 @@
+body {
+    background-color: #05b3e3;
+    color: #000;
+    font-family: Domine, "PT Serif", Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    margin: 0;
+}
+
+h1, h2, h3, h4, h5 ,h6 {
+    color: #444;
+}
+
+hr {
+    border: 1px solid #777;
+    margin:1.5em 0;
+}
+
+code,pre {
+    font-family: Menlo, Monaco, "Source Sans Pro", "Ubuntu Mono", Consolas, "Courier New", monospace;
+    background-color: #F5F5F5;
+}
+
+pre {
+    font-size: .8em;
+    line-height: 1.4em;
+    padding: .5em;
+    border-radius: 5px;
+    overflow-wrap: break-word;
+}
+
+code {
+    font-size: .8em;
+    padding: 1px 4px;
+    border-radius: 5px;
+    overflow-wrap: break-word;
+}
+
+pre>code{
+    padding: 0;
+    background: transparent;
+}
+
+a {
+    color: #37AFFF;
+    text-decoration: none;
+}
+
+blockquote {
+    font-style: italic;
+    border-left: 4px solid #777;
+    color: #555;
+    margin: 0;
+    padding: .01em 2em;
+    background-color: #eee;
+}
+
+a:hover, #menu a:hover {
+    border-bottom: 1px solid;
+}
+
+.box {
+    background-color: #fff;
+    color: #555;
+}
+
+.clear {
+    clear: both;
+}
+
+.article {
+    background: #fff;
+    color: #000;
+    margin: auto;
+    line-height: 2em;
+    max-width: 40em;
+    padding: 100px;
+    margin-top: 50px;
+}
+
+.article img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.article h1.title {
+    margin-top: 0;
+    font-size: 2em;
+}
+
+.article h1.comments {
+    margin-top: 3em;
+}
+
+.article-heading h2 a{
+    display: block;
+    padding: 20px 30px;
+    margin-bottom: 20px;
+    background-color: #fff;
+    transition: background .3s;
+    border: none;
+}
+
+.article-heading h2 a:hover {
+    background-color: #ddd;
+    text-decoration: none;
+}
+
+.article .date {
+    color: #aaa;
+    font-style: italic;
+}
+
+.chaser h3 {
+    margin-top: .7em;
+    margin-bottom: .5em;
+}
+
+.chaser a {
+    margin-right: .2em;
+}
+
+.datetime {
+    font-style: italic;
+    color: #bbb;
+    font-size: .8em;
+}
+
+.prevnext {
+    width: 100%;
+}
+
+.prevnext>div {
+    width: 48%;
+    background-color: #333;
+    color: #fff;
+}
+
+.prevnext>div a {
+    display: block;
+    padding: 10px;
+    border-bottom: 0;
+}
+
+.prevnext>div a:hover {
+    color: #80CC15;
+}
+
+.prevnext .prev {
+    float: left;
+}
+
+.prevnext .next {
+    float: right;
+}
+
+.tag {
+    padding: 0 .2em;
+}
+
+.tag-block {
+    padding: 5px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #fff;
+}
+
+.tag-block h2 {
+    margin-top: 0;
+}
+
+ul.articles, .tag-block ul {
+    margin: 0;
+    padding: 0;
+}
+
+ul.articles li, .tag-block li {
+    list-style: none;
+}
+
+.tag-block:target {
+    border: 1px dashed #37AFFF;
+}
+
+#main-nav {
+    height: 3em;
+    font-size: 1.4em;
+    line-height: 3em;
+    color: #000;
+    padding-left: 2.5em;
+}
+
+#main-nav a {
+    border: 0;
+    color: #000;
+    display: inline-block;
+    padding: 6px 10px;
+}
+
+#main-nav a:hover {
+    color: #fff;
+    text-decoration: none;
+}
+
+#main-footer {
+    background-color: transparent;
+    clear: both;
+    color: #555;
+    display: block;
+    height: inherit;
+    margin: 60px 0 30px;
+    text-align: middle;
+    vertical-align: bottom;
+    width: 100%;
+    z-index: 1;
+    font-size: .8em;
+}
+
+#main-footer p {
+    text-align: center;
+}
+
+#main-footer a {
+    color: #000;
+    border-bottom: 1px solid #000;
+}

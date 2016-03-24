@@ -1,0 +1,26 @@
+{% extends "basic.html" %}
+
+{% block title %}My Site.com{% endblock %}
+
+{% block content %}
+
+<div class="article">
+
+<p>Hi, this is my site.</p>
+
+<p>Here's something interesting about me that you might not know.</p>
+
+<p>Follow me on <a href="https://twitter.com/">Twitter</a></p>
+
+<h2>Recent Articles</h2>
+<ul class="articles">
+{% for page in site.pages(path="articles/", limit=5, order="-date") %}
+	<li><a href="{{ page.url }}">{{ page.title }}</a></li>
+{% endfor %}
+</ul>
+
+<p><a href="/articles/">See all of them</a></p>
+
+</div>
+
+{% endblock %}

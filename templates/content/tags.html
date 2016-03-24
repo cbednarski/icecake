@@ -1,0 +1,22 @@
+{% extends "basic.html" %}
+
+{% block title %}My Site.com{% endblock %}
+
+{% block content %}
+
+<div class="article">
+
+{% for tag in site.tags() %}
+	<div id="tag-{{tag}}" class="tag-block">
+	<h1>{{tag}}</h1>
+	<ul>
+	{% for page in site.pages(path="articles/", order="title", tag=tag) %}
+		<li><a href="{{ page.url }}">{{ page.title }}</a></li>
+	{% endfor %}
+	</ul>
+	</div>
+{% endfor %}
+
+</div>
+
+{% endblock %}

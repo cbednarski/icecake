@@ -20,5 +20,7 @@ setup(
     entry_points='''
         [console_scripts]
         icecake=icecake:cli
-    '''
+    ''',
+    package_data={'': ['templates/*']},
+    keywords="static site generator builder icecake"
 )

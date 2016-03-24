@@ -1,0 +1,25 @@
+{% extends "basic.html" %}
+
+{% block title %}{{ title }} :: My Site.com{% endblock %}
+
+{% block content %}
+
+<div class="article">
+  <h1 class="title">{{ title }}</h1>
+  <p class="date">Published {{ date }}</p>
+
+{{ content }}
+
+<hr>
+
+<h4>Related</h4>
+
+<p>
+{% for tag in tags %}
+<a class="tag" href="/tags/#tag-{{ tag }}">{{ tag }}</a>
+{% endfor %}
+</p>
+
+</div>
+
+{% endblock %}
