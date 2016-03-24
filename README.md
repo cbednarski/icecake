@@ -161,7 +161,7 @@ Warning: If you try to sort based on a metadata property that is not specified o
 
 We'll show two examples of how to use this below.
 
-#### List Articles Tagged "Blog"
+### List Articles Tagged "Blog"
 
 You can use this to create a blog index page, for example:
 
@@ -171,7 +171,7 @@ You can use this to create a blog index page, for example:
 {% endfor %}
 ```
 
-#### List 5 Recent Articles
+### List 5 Recent Articles
 
 ```
 {% for page in site.pages(path="articles/", order="-date", limit=5) %}
