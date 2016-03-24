@@ -33,6 +33,8 @@ from dateutil.parser import parse as dateparse
 from werkzeug.contrib.atom import AtomFeed
 
 
+from templates import templates
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -372,12 +374,8 @@ class Initializer:
     def init(self):
         if not os.path.isdir(self.root):
             os.makedirs(self.root)
-        templates_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
-        for source_path in Site.list_files(templates_path):
-            source_filename = os.path.relpath(source_path, templates_path)
-            contents = open(source_path).read()
-            target = os.path.join(self.root, source_filename)
-
+        for path, contents in templates.items():
+            target = os.path.join(self.root, path)
             target_dir = os.path.dirname(target)
             if not os.path.isdir(target_dir):
                 os.makedirs(target_dir)

@@ -2,8 +2,10 @@ import pytest
 import icecake
 import jinja2
 
+
 class TestPage:
     def test_init(self):
+        print(dir(icecake))
         page = icecake.Page("this/file/does/not/exist.html")
         assert page.slug == "exist"
         assert page.folder == "this/file/does/not"

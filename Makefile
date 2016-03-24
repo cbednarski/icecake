@@ -2,6 +2,11 @@ pip=venv/bin/pip
 pytest=venv/bin/py.test
 python=venv/bin/python
 
+build: init
+	pandoc -f markdown -t rst README.md > README.rst
+	$(python) generate.py
+	$(MAKE) test
+
 init:
 	@if [ ! -d venv ]; then \
 		virtualenv venv ; \
@@ -10,7 +15,7 @@ init:
 	fi
 
 test: init
-	$(pytest) -q test_icecake.py
+	$(pytest)
 
 freeze:
 	$(pip) freeze > requirements.txt
