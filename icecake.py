@@ -227,7 +227,7 @@ class Site:
     building your site.
     """
 
-    def __init__(self, root=None):
+    def __init__(self, root):
         """
         Keyword Arguments:
         root -- The path to the static site folder which includes the pages,
@@ -361,16 +361,54 @@ class Site:
         return found
 
 
+class Initializer:
+    templates = {
+    }
+
+    def __init__(self, root):
+        self.root = root
+
+    def init(self):
+        for path, content in enumerate(self.templates):
+            target = os.path.join(self.root, path)
+            with open(target, mode="w") as f:
+                logging.info("Writing %s" % target)
+                f.write(content)
+                f.close()
+
+    def is_dirty(self):
+        """
+        Check whether the specified path already contains files
+        """
+        return len(Site.list_files(self.root)) > 0
+
+
+class Server:
+    def __init__(self, root):
+        self.root = root
+        self.site = Site(root)
+
+
 @click.group()
 def cli():
     pass
 
 
-@cli.command()
+@cli.command( help="""
+    Initialize a project in the specified directory. The path will be created if
+    it does not exist.
+    """)
 @click.option("--debug/--no-debug", default=False)
-def init(debug):
+@click.option("-f/--force", help="Initialize even if the directory is not empty", default=False)
+@click.argument("path", type=click.Path())
+def init(debug, f, path):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
+    i = Initializer(os.path.abspath(os.getcwd()))
+    if i.is_dirty() and not f:
+        click.echo("Path \"%s\" already contains files; use -f to force initialization" % path)
+        exit(1)
+    i.init()
 
 
 @cli.command()
@@ -386,6 +424,7 @@ def build(debug):
 def preview(debug):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
+    Server(os.path.abspath(os.getcwd())).build()
 
 
 if __name__ == "__main__":
