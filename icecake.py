@@ -45,6 +45,7 @@ class Page:
     rendered. However, a page may have additional metadata like date or tags.
     """
     metadata = ["tags", "date", "title", "slug", "template"]
+    required = ["date", "title"]
     metadelimiter = "++++"
 
     def __init__(self, filepath):
@@ -155,7 +156,7 @@ class Page:
             if value is None and getattr(self, key, None) is not None:
                 continue
             setattr(self, key, value)
-            if value == None:
+            if value == None and key in self.required:
                 logging.warning("Metadata '%s' not specified in %s", key,
                                 self.filepath)
         self.url = self._get_url()
@@ -175,8 +176,9 @@ class Page:
             page.body = parts[1].strip()
         else:
             page.body = parts[0].strip()
-            logging.warning("No metadata detected; expected %s separator %s",
-                            cls.metadelimiter, page.filepath)
+            if page.ext in ['.md', '.markdown']:
+                logging.warning("No metadata detected; expected %s separator %s",
+                                cls.metadelimiter, page.filepath)
             # Say we already parsed the metadata
             page.parsed=True
         return page
@@ -299,7 +301,7 @@ class Site:
                 os.makedirs(output_path, mode=0o755)
 
             open(output_filename, mode="w").write(page.render(self))
-            logging.info("Wrote \"%s\" (%s)", page.title, page.filepath)
+            logging.info('Wrote %s', page.filepath)
 
         self.copystatic()
 
