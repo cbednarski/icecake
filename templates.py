@@ -1,1 +1,451 @@
-templates = {'templates/layouts/basic.html': '<!DOCTYPE html>\n<head>\n  <title>{% block title %}{{ title }} :: My Site.com{% endblock %}</title>\n  <link href="/css/main.css" rel="stylesheet" />\n  <link href="/css/syntax.css" rel="stylesheet" />\n  <link href="/atom.xml" rel="alternate" type="application/atom+xml" title="My Site" />\n  <link href="//fonts.googleapis.com/css?family=Domine:400,700" rel="stylesheet" type="text/css" />\n</head>\n<body>\n\n<nav id="main-nav">\n  <a href="/">My Site</a>\n  <a href="/articles/">Articles</a>\n</nav>\n\n<section id="main-content">\n{% block content %}{% endblock %}\n</section>\n\n<footer id="main-footer">\n  <p>Copyright &copy; 2016 A Smart Person. All rights reserved. | Proudly built with <a href="https://github.com/cbednarski/icecake">Icecake</a></p>\n</footer>\n\n</body>\n</html>\n', 'templates/content/index.html': '{% extends "basic.html" %}\n\n{% block title %}My Site.com{% endblock %}\n\n{% block content %}\n\n<div class="article">\n\n<p>Hi, this is my site.</p>\n\n<p>Here\'s something interesting about me that you might not know.</p>\n\n<p>Follow me on <a href="https://twitter.com/">Twitter</a></p>\n\n<h2>Recent Articles</h2>\n<ul class="articles">\n{% for page in site.pages(path="articles/", limit=5, order="-date") %}\n\t<li><a href="{{ page.url }}">{{ page.title }}</a></li>\n{% endfor %}\n</ul>\n\n<p><a href="/articles/">See all of them</a></p>\n\n</div>\n\n{% endblock %}\n', 'templates/content/atom.xml': '{{\n  site.atom(\n    path="articles/",\n    order="-date",\n    site_url="https://example.com",\n    feed_url="https://example.com"+url,\n    feed_title="My Site",\n    feed_subtitle=None,\n    author="a smart person"\n  )\n}}', 'templates/static/css/syntax.css': '.codehilite .hll { background-color: #ffffcc }\n.codehilite .c { color: #0099FF; font-style: italic } /* Comment */\n.codehilite .err { color: #AA0000; background-color: #FFAAAA } /* Error */\n.codehilite .k { color: #006699; font-weight: bold } /* Keyword */\n.codehilite .o { color: #555555 } /* Operator */\n.codehilite .cm { color: #0099FF; font-style: italic } /* Comment.Multiline */\n.codehilite .cp { color: #009999 } /* Comment.Preproc */\n.codehilite .c1 { color: #0099FF; font-style: italic } /* Comment.Single */\n.codehilite .cs { color: #0099FF; font-weight: bold; font-style: italic } /* Comment.Special */\n.codehilite .gd { background-color: #FFCCCC; border: 1px solid #CC0000 } /* Generic.Deleted */\n.codehilite .ge { font-style: italic } /* Generic.Emph */\n.codehilite .gr { color: #FF0000 } /* Generic.Error */\n.codehilite .gh { color: #003300; font-weight: bold } /* Generic.Heading */\n.codehilite .gi { background-color: #CCFFCC; border: 1px solid #00CC00 } /* Generic.Inserted */\n.codehilite .go { color: #AAAAAA } /* Generic.Output */\n.codehilite .gp { color: #000099; font-weight: bold } /* Generic.Prompt */\n.codehilite .gs { font-weight: bold } /* Generic.Strong */\n.codehilite .gu { color: #003300; font-weight: bold } /* Generic.Subheading */\n.codehilite .gt { color: #99CC66 } /* Generic.Traceback */\n.codehilite .kc { color: #006699; font-weight: bold } /* Keyword.Constant */\n.codehilite .kd { color: #006699; font-weight: bold } /* Keyword.Declaration */\n.codehilite .kn { color: #006699; font-weight: bold } /* Keyword.Namespace */\n.codehilite .kp { color: #006699 } /* Keyword.Pseudo */\n.codehilite .kr { color: #006699; font-weight: bold } /* Keyword.Reserved */\n.codehilite .kt { color: #007788; font-weight: bold } /* Keyword.Type */\n.codehilite .m { color: #FF6600 } /* Literal.Number */\n.codehilite .s { color: #CC3300 } /* Literal.String */\n.codehilite .na { color: #330099 } /* Name.Attribute */\n.codehilite .nb { color: #336666 } /* Name.Builtin */\n.codehilite .nc { color: #00AA88; font-weight: bold } /* Name.Class */\n.codehilite .no { color: #336600 } /* Name.Constant */\n.codehilite .nd { color: #9999FF } /* Name.Decorator */\n.codehilite .ni { color: #999999; font-weight: bold } /* Name.Entity */\n.codehilite .ne { color: #CC0000; font-weight: bold } /* Name.Exception */\n.codehilite .nf { color: #CC00FF } /* Name.Function */\n.codehilite .nl { color: #9999FF } /* Name.Label */\n.codehilite .nn { color: #00CCFF; font-weight: bold } /* Name.Namespace */\n.codehilite .nt { color: #330099; font-weight: bold } /* Name.Tag */\n.codehilite .nv { color: #003333 } /* Name.Variable */\n.codehilite .ow { color: #000000; font-weight: bold } /* Operator.Word */\n.codehilite .w { color: #bbbbbb } /* Text.Whitespace */\n.codehilite .mf { color: #FF6600 } /* Literal.Number.Float */\n.codehilite .mh { color: #FF6600 } /* Literal.Number.Hex */\n.codehilite .mi { color: #FF6600 } /* Literal.Number.Integer */\n.codehilite .mo { color: #FF6600 } /* Literal.Number.Oct */\n.codehilite .sb { color: #CC3300 } /* Literal.String.Backtick */\n.codehilite .sc { color: #CC3300 } /* Literal.String.Char */\n.codehilite .sd { color: #CC3300; font-style: italic } /* Literal.String.Doc */\n.codehilite .s2 { color: #CC3300 } /* Literal.String.Double */\n.codehilite .se { color: #CC3300; font-weight: bold } /* Literal.String.Escape */\n.codehilite .sh { color: #CC3300 } /* Literal.String.Heredoc */\n.codehilite .si { color: #AA0000 } /* Literal.String.Interpol */\n.codehilite .sx { color: #CC3300 } /* Literal.String.Other */\n.codehilite .sr { color: #33AAAA } /* Literal.String.Regex */\n.codehilite .s1 { color: #CC3300 } /* Literal.String.Single */\n.codehilite .ss { color: #FFCC33 } /* Literal.String.Symbol */\n.codehilite .bp { color: #336666 } /* Name.Builtin.Pseudo */\n.codehilite .vc { color: #003333 } /* Name.Variable.Class */\n.codehilite .vg { color: #003333 } /* Name.Variable.Global */\n.codehilite .vi { color: #003333 } /* Name.Variable.Instance */\n.codehilite .il { color: #FF6600 } /* Literal.Number.Integer.Long */', 'templates/layouts/markdown.html': '{% extends "basic.html" %}\n\n{% block title %}{{ title }} :: My Site.com{% endblock %}\n\n{% block content %}\n\n<div class="article">\n  <h1 class="title">{{ title }}</h1>\n  <p class="date">Published {{ date }}</p>\n\n{{ content }}\n\n<hr>\n\n<h4>Related</h4>\n\n<p>\n{% for tag in tags %}\n<a class="tag" href="/tags/#tag-{{ tag }}">{{ tag }}</a>\n{% endfor %}\n</p>\n\n</div>\n\n{% endblock %}\n', 'templates/content/articles.html': '{% extends "basic.html" %}\n\n{% block title %}Articles :: My Site.com{% endblock %}\n\n{% block content %}\n\n<div class="article">\n\n<h1>Articles</h1>\n\n<ul class="articles">\n{% for page in site.pages(path="articles/", order="-date") %}\n\t<li><a href="{{ page.url }}">{{ page.title }}</a></li>\n{% endfor %}\n</ul>\n\n</div>\n\n{% endblock %}\n', 'templates/content/tags.html': '{% extends "basic.html" %}\n\n{% block title %}My Site.com{% endblock %}\n\n{% block content %}\n\n<div class="article">\n\n{% for tag in site.tags() %}\n\t<div id="tag-{{tag}}" class="tag-block">\n\t<h1>{{tag}}</h1>\n\t<ul>\n\t{% for page in site.pages(path="articles/", order="title", tag=tag) %}\n\t\t<li><a href="{{ page.url }}">{{ page.title }}</a></li>\n\t{% endfor %}\n\t</ul>\n\t</div>\n{% endfor %}\n\n</div>\n\n{% endblock %}\n', 'templates/static/css/main.css': 'body {\n    background-color: #05b3e3;\n    color: #000;\n    font-family: Domine, "PT Serif", Georgia, "Times New Roman", serif;\n    font-size: 18px;\n    margin: 0;\n}\n\nh1, h2, h3, h4, h5 ,h6 {\n    color: #444;\n}\n\nhr {\n    border: 1px solid #777;\n    margin:1.5em 0;\n}\n\ncode,pre {\n    font-family: Menlo, Monaco, "Source Sans Pro", "Ubuntu Mono", Consolas, "Courier New", monospace;\n    background-color: #F5F5F5;\n}\n\npre {\n    font-size: .8em;\n    line-height: 1.4em;\n    padding: .5em;\n    border-radius: 5px;\n    overflow-wrap: break-word;\n}\n\ncode {\n    font-size: .8em;\n    padding: 1px 4px;\n    border-radius: 5px;\n    overflow-wrap: break-word;\n}\n\npre>code{\n    padding: 0;\n    background: transparent;\n}\n\na {\n    color: #37AFFF;\n    text-decoration: none;\n}\n\nblockquote {\n    font-style: italic;\n    border-left: 4px solid #777;\n    color: #555;\n    margin: 0;\n    padding: .01em 2em;\n    background-color: #eee;\n}\n\na:hover, #menu a:hover {\n    border-bottom: 1px solid;\n}\n\n.box {\n    background-color: #fff;\n    color: #555;\n}\n\n.clear {\n    clear: both;\n}\n\n.article {\n    background: #fff;\n    color: #000;\n    margin: auto;\n    line-height: 2em;\n    max-width: 40em;\n    padding: 100px;\n    margin-top: 50px;\n}\n\n.article img {\n    max-width: 100%;\n    max-height: 100%;\n}\n\n.article h1.title {\n    margin-top: 0;\n    font-size: 2em;\n}\n\n.article h1.comments {\n    margin-top: 3em;\n}\n\n.article-heading h2 a{\n    display: block;\n    padding: 20px 30px;\n    margin-bottom: 20px;\n    background-color: #fff;\n    transition: background .3s;\n    border: none;\n}\n\n.article-heading h2 a:hover {\n    background-color: #ddd;\n    text-decoration: none;\n}\n\n.article .date {\n    color: #aaa;\n    font-style: italic;\n}\n\n.chaser h3 {\n    margin-top: .7em;\n    margin-bottom: .5em;\n}\n\n.chaser a {\n    margin-right: .2em;\n}\n\n.datetime {\n    font-style: italic;\n    color: #bbb;\n    font-size: .8em;\n}\n\n.prevnext {\n    width: 100%;\n}\n\n.prevnext>div {\n    width: 48%;\n    background-color: #333;\n    color: #fff;\n}\n\n.prevnext>div a {\n    display: block;\n    padding: 10px;\n    border-bottom: 0;\n}\n\n.prevnext>div a:hover {\n    color: #80CC15;\n}\n\n.prevnext .prev {\n    float: left;\n}\n\n.prevnext .next {\n    float: right;\n}\n\n.tag {\n    padding: 0 .2em;\n}\n\n.tag-block {\n    padding: 5px;\n    border-radius: 5px;\n    margin-bottom: 10px;\n    border: 1px solid #fff;\n}\n\n.tag-block h2 {\n    margin-top: 0;\n}\n\nul.articles, .tag-block ul {\n    margin: 0;\n    padding: 0;\n}\n\nul.articles li, .tag-block li {\n    list-style: none;\n}\n\n.tag-block:target {\n    border: 1px dashed #37AFFF;\n}\n\n#main-nav {\n    height: 3em;\n    font-size: 1.4em;\n    line-height: 3em;\n    color: #000;\n    padding-left: 2.5em;\n}\n\n#main-nav a {\n    border: 0;\n    color: #000;\n    display: inline-block;\n    padding: 6px 10px;\n}\n\n#main-nav a:hover {\n    color: #fff;\n    text-decoration: none;\n}\n\n#main-footer {\n    background-color: transparent;\n    clear: both;\n    color: #555;\n    display: block;\n    height: inherit;\n    margin: 60px 0 30px;\n    text-align: middle;\n    vertical-align: bottom;\n    width: 100%;\n    z-index: 1;\n    font-size: .8em;\n}\n\n#main-footer p {\n    text-align: center;\n}\n\n#main-footer a {\n    color: #000;\n    border-bottom: 1px solid #000;\n}\n', 'templates/content/articles/hello-world.md': "title = Hello world!\ndate = 2016-04-02\ntags = hello\n++++\n\nI'm building a website! When I do something cool that I'd like to share with you, I'm going to write about it here.\n\nI'll write with [Markdown](https://daringfireball.net/projects/markdown/) and maybe even write some code:\n\n```\n# This is a title\n\nAnd this is a list:\n\n- cake\n- chocolate\n- candy\n```\n\nThat's all for now!"}
+templates = {
+"templates/content/articles.html":
+"""{% extends "basic.html" %}
+
+{% block title %}Articles :: My Site.com{% endblock %}
+
+{% block content %}
+
+<div class="article">
+
+<h1>Articles</h1>
+
+<ul class="articles">
+{% for page in site.pages(path="articles/", order="-date") %}
+	<li><a href="{{ page.url }}">{{ page.title }}</a></li>
+{% endfor %}
+</ul>
+
+</div>
+
+{% endblock %}
+""",
+"templates/content/atom.xml":
+"""{{
+  site.atom(
+    path="articles/",
+    order="-date",
+    site_url="https://example.com",
+    feed_url="https://example.com"+url,
+    feed_title="My Site",
+    feed_subtitle=None,
+    author="a smart person"
+  )
+}}""",
+"templates/content/index.html":
+"""{% extends "basic.html" %}
+
+{% block title %}My Site.com{% endblock %}
+
+{% block content %}
+
+<div class="article">
+
+<p>Hi, this is my site.</p>
+
+<p>Here's something interesting about me that you might not know.</p>
+
+<p>Follow me on <a href="https://twitter.com/">Twitter</a></p>
+
+<h2>Recent Articles</h2>
+<ul class="articles">
+{% for page in site.pages(path="articles/", limit=5, order="-date") %}
+	<li><a href="{{ page.url }}">{{ page.title }}</a></li>
+{% endfor %}
+</ul>
+
+<p><a href="/articles/">See all of them</a></p>
+
+</div>
+
+{% endblock %}
+""",
+"templates/content/tags.html":
+"""{% extends "basic.html" %}
+
+{% block title %}My Site.com{% endblock %}
+
+{% block content %}
+
+<div class="article">
+
+{% for tag in site.tags() %}
+	<div id="tag-{{tag}}" class="tag-block">
+	<h1>{{tag}}</h1>
+	<ul>
+	{% for page in site.pages(path="articles/", order="title", tag=tag) %}
+		<li><a href="{{ page.url }}">{{ page.title }}</a></li>
+	{% endfor %}
+	</ul>
+	</div>
+{% endfor %}
+
+</div>
+
+{% endblock %}
+""",
+"templates/content/articles/hello-world.md":
+"""title = Hello world!
+date = 2016-04-02
+tags = hello
+++++
+
+I'm building a website! When I do something cool that I'd like to share with you, I'm going to write about it here.
+
+I'll write with [Markdown](https://daringfireball.net/projects/markdown/) and maybe even write some code:
+
+```
+# This is a title
+
+And this is a list:
+
+- cake
+- chocolate
+- candy
+```
+
+That's all for now!""",
+"templates/layouts/basic.html":
+"""<!DOCTYPE html>
+<head>
+  <title>{% block title %}{{ title }} :: My Site.com{% endblock %}</title>
+  <link href="/css/main.css" rel="stylesheet" />
+  <link href="/css/syntax.css" rel="stylesheet" />
+  <link href="/atom.xml" rel="alternate" type="application/atom+xml" title="My Site" />
+  <link href="//fonts.googleapis.com/css?family=Domine:400,700" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<nav id="main-nav">
+  <a href="/">My Site</a>
+  <a href="/articles/">Articles</a>
+</nav>
+
+<section id="main-content">
+{% block content %}{% endblock %}
+</section>
+
+<footer id="main-footer">
+  <p>Copyright &copy; 2016 A Smart Person. All rights reserved. | Proudly built with <a href="https://github.com/cbednarski/icecake">Icecake</a></p>
+</footer>
+
+</body>
+</html>
+""",
+"templates/layouts/markdown.html":
+"""{% extends "basic.html" %}
+
+{% block title %}{{ title }} :: My Site.com{% endblock %}
+
+{% block content %}
+
+<div class="article">
+  <h1 class="title">{{ title }}</h1>
+  <p class="date">Published {{ date }}</p>
+
+{{ content }}
+
+<hr>
+
+<h4>Related</h4>
+
+<p>
+{% for tag in tags %}
+<a class="tag" href="/tags/#tag-{{ tag }}">{{ tag }}</a>
+{% endfor %}
+</p>
+
+</div>
+
+{% endblock %}
+""",
+"templates/static/css/main.css":
+"""body {
+    background-color: #05b3e3;
+    color: #000;
+    font-family: Domine, "PT Serif", Georgia, "Times New Roman", serif;
+    font-size: 18px;
+    margin: 0;
+}
+
+h1, h2, h3, h4, h5 ,h6 {
+    color: #444;
+}
+
+hr {
+    border: 1px solid #777;
+    margin:1.5em 0;
+}
+
+code,pre {
+    font-family: Menlo, Monaco, "Source Sans Pro", "Ubuntu Mono", Consolas, "Courier New", monospace;
+    background-color: #F5F5F5;
+}
+
+pre {
+    font-size: .8em;
+    line-height: 1.4em;
+    padding: .5em;
+    border-radius: 5px;
+    overflow-wrap: break-word;
+}
+
+code {
+    font-size: .8em;
+    padding: 1px 4px;
+    border-radius: 5px;
+    overflow-wrap: break-word;
+}
+
+pre>code{
+    padding: 0;
+    background: transparent;
+}
+
+a {
+    color: #37AFFF;
+    text-decoration: none;
+}
+
+blockquote {
+    font-style: italic;
+    border-left: 4px solid #777;
+    color: #555;
+    margin: 0;
+    padding: .01em 2em;
+    background-color: #eee;
+}
+
+a:hover, #menu a:hover {
+    border-bottom: 1px solid;
+}
+
+.box {
+    background-color: #fff;
+    color: #555;
+}
+
+.clear {
+    clear: both;
+}
+
+.article {
+    background: #fff;
+    color: #000;
+    margin: auto;
+    line-height: 2em;
+    max-width: 40em;
+    padding: 100px;
+    margin-top: 50px;
+}
+
+.article img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.article h1.title {
+    margin-top: 0;
+    font-size: 2em;
+}
+
+.article h1.comments {
+    margin-top: 3em;
+}
+
+.article-heading h2 a{
+    display: block;
+    padding: 20px 30px;
+    margin-bottom: 20px;
+    background-color: #fff;
+    transition: background .3s;
+    border: none;
+}
+
+.article-heading h2 a:hover {
+    background-color: #ddd;
+    text-decoration: none;
+}
+
+.article .date {
+    color: #aaa;
+    font-style: italic;
+}
+
+.chaser h3 {
+    margin-top: .7em;
+    margin-bottom: .5em;
+}
+
+.chaser a {
+    margin-right: .2em;
+}
+
+.datetime {
+    font-style: italic;
+    color: #bbb;
+    font-size: .8em;
+}
+
+.prevnext {
+    width: 100%;
+}
+
+.prevnext>div {
+    width: 48%;
+    background-color: #333;
+    color: #fff;
+}
+
+.prevnext>div a {
+    display: block;
+    padding: 10px;
+    border-bottom: 0;
+}
+
+.prevnext>div a:hover {
+    color: #80CC15;
+}
+
+.prevnext .prev {
+    float: left;
+}
+
+.prevnext .next {
+    float: right;
+}
+
+.tag {
+    padding: 0 .2em;
+}
+
+.tag-block {
+    padding: 5px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #fff;
+}
+
+.tag-block h2 {
+    margin-top: 0;
+}
+
+ul.articles, .tag-block ul {
+    margin: 0;
+    padding: 0;
+}
+
+ul.articles li, .tag-block li {
+    list-style: none;
+}
+
+.tag-block:target {
+    border: 1px dashed #37AFFF;
+}
+
+#main-nav {
+    height: 3em;
+    font-size: 1.4em;
+    line-height: 3em;
+    color: #000;
+    padding-left: 2.5em;
+}
+
+#main-nav a {
+    border: 0;
+    color: #000;
+    display: inline-block;
+    padding: 6px 10px;
+}
+
+#main-nav a:hover {
+    color: #fff;
+    text-decoration: none;
+}
+
+#main-footer {
+    background-color: transparent;
+    clear: both;
+    color: #555;
+    display: block;
+    height: inherit;
+    margin: 60px 0 30px;
+    text-align: middle;
+    vertical-align: bottom;
+    width: 100%;
+    z-index: 1;
+    font-size: .8em;
+}
+
+#main-footer p {
+    text-align: center;
+}
+
+#main-footer a {
+    color: #000;
+    border-bottom: 1px solid #000;
+}
+""",
+"templates/static/css/syntax.css":
+""".codehilite .hll { background-color: #ffffcc }
+.codehilite .c { color: #0099FF; font-style: italic } /* Comment */
+.codehilite .err { color: #AA0000; background-color: #FFAAAA } /* Error */
+.codehilite .k { color: #006699; font-weight: bold } /* Keyword */
+.codehilite .o { color: #555555 } /* Operator */
+.codehilite .cm { color: #0099FF; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #009999 } /* Comment.Preproc */
+.codehilite .c1 { color: #0099FF; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #0099FF; font-weight: bold; font-style: italic } /* Comment.Special */
+.codehilite .gd { background-color: #FFCCCC; border: 1px solid #CC0000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .gr { color: #FF0000 } /* Generic.Error */
+.codehilite .gh { color: #003300; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { background-color: #CCFFCC; border: 1px solid #00CC00 } /* Generic.Inserted */
+.codehilite .go { color: #AAAAAA } /* Generic.Output */
+.codehilite .gp { color: #000099; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #003300; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #99CC66 } /* Generic.Traceback */
+.codehilite .kc { color: #006699; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #006699; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #006699; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #006699 } /* Keyword.Pseudo */
+.codehilite .kr { color: #006699; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #007788; font-weight: bold } /* Keyword.Type */
+.codehilite .m { color: #FF6600 } /* Literal.Number */
+.codehilite .s { color: #CC3300 } /* Literal.String */
+.codehilite .na { color: #330099 } /* Name.Attribute */
+.codehilite .nb { color: #336666 } /* Name.Builtin */
+.codehilite .nc { color: #00AA88; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #336600 } /* Name.Constant */
+.codehilite .nd { color: #9999FF } /* Name.Decorator */
+.codehilite .ni { color: #999999; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CC0000; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #CC00FF } /* Name.Function */
+.codehilite .nl { color: #9999FF } /* Name.Label */
+.codehilite .nn { color: #00CCFF; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #330099; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #003333 } /* Name.Variable */
+.codehilite .ow { color: #000000; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #bbbbbb } /* Text.Whitespace */
+.codehilite .mf { color: #FF6600 } /* Literal.Number.Float */
+.codehilite .mh { color: #FF6600 } /* Literal.Number.Hex */
+.codehilite .mi { color: #FF6600 } /* Literal.Number.Integer */
+.codehilite .mo { color: #FF6600 } /* Literal.Number.Oct */
+.codehilite .sb { color: #CC3300 } /* Literal.String.Backtick */
+.codehilite .sc { color: #CC3300 } /* Literal.String.Char */
+.codehilite .sd { color: #CC3300; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #CC3300 } /* Literal.String.Double */
+.codehilite .se { color: #CC3300; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #CC3300 } /* Literal.String.Heredoc */
+.codehilite .si { color: #AA0000 } /* Literal.String.Interpol */
+.codehilite .sx { color: #CC3300 } /* Literal.String.Other */
+.codehilite .sr { color: #33AAAA } /* Literal.String.Regex */
+.codehilite .s1 { color: #CC3300 } /* Literal.String.Single */
+.codehilite .ss { color: #FFCC33 } /* Literal.String.Symbol */
+.codehilite .bp { color: #336666 } /* Name.Builtin.Pseudo */
+.codehilite .vc { color: #003333 } /* Name.Variable.Class */
+.codehilite .vg { color: #003333 } /* Name.Variable.Global */
+.codehilite .vi { color: #003333 } /* Name.Variable.Instance */
+.codehilite .il { color: #FF6600 } /* Literal.Number.Integer.Long */""",
+}

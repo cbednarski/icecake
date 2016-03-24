@@ -23,3 +23,6 @@ freeze:
 publish:
 	$(python) setup.py register
 	$(python) setup.py sdist upload
+
+inspect:
+	$(python) setup.py sdist && tar -tzf dist/icecake-0.2.0.tar.gz
