@@ -7,6 +7,8 @@ setup(
     url="https://github.com/cbednarski/icecake",
     author="Chris Bednarski",
     author_email="banzaimonkey@gmail.com",
+    description="An easy and cool static site generator",
+    license="MIT",
     install_requires=[
         'Click',
         'Jinja2',
