@@ -5,3 +5,4 @@ Pygments==2.0.2
 python-dateutil==2.5.1
 Werkzeug==0.11.4
 pytest==2.9.1
+watchdog==0.8.3

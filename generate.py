@@ -7,10 +7,9 @@ import icecake
 def generate():
 
     output = 'templates = {\n'
-    for source_filename in icecake.Site.list_files('templates'):
-        contents = open(source_filename).read()
-        target_filename = os.path.relpath(source_filename, 'templates')
-        output += '"%s":\n' % target_filename
+    for filename in icecake.ls_relative('templates'):
+        contents = open(os.path.join('templates', filename)).read()
+        output += '"%s":\n' % filename
         output += '"""' + contents + '""",\n'
     output += '}'
 

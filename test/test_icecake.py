@@ -1,20 +1,38 @@
 import pytest
 import icecake
 import jinja2
+from templates import templates
+from os.path import abspath, dirname, isfile, join
+
+
+module_root = dirname(dirname(abspath(__file__)))
+test_root = dirname(abspath(__file__))
+
+
+class TestFunctions:
+    def test_ls_relative(self):
+        items = icecake.ls_relative(join(test_root, 'fixtures/ls'))
+        assert items == [
+            'a.txt',
+            'b.md',
+            'c.html',
+            'd/e.css'
+        ]
 
 
 class TestPage:
     def test_init(self):
-        print(dir(icecake))
-        page = icecake.Page("this/file/does/not/exist.html")
+        site = icecake.Site('.')
+        page = icecake.Page("./content/this/file/does/not/exist.html", site)
         assert page.slug == "exist"
         assert page.folder == "this/file/does/not"
         assert page.ext == ".html"
         assert page.url == "/this/file/does/not/exist/"
 
     def test_parse_checker(self):
+        site = icecake.Site('.')
         with pytest.raises(RuntimeError):
-            page = icecake.Page("this/file/does/not/exist.html")
+            page = icecake.Page("./content/this/file/does/not/exist.html", site)
             page.get_target()
 
     def test_parse_metadata(self):
@@ -26,7 +44,8 @@ slug = some-title
 template = myfile.html
         """
 
-        page = icecake.Page("this/file/does/not/exist.html")
+        site = icecake.Site('.')
+        page = icecake.Page("./content/this/file/does/not/exist.html", site)
         page.parse_metadata(meta)
 
         assert page.title == "Some title"
@@ -38,19 +57,20 @@ template = myfile.html
 
     def test_get_target(self):
         # Test basic case
-        page = icecake.Page("this/file/does/not/exist.html")
+        site = icecake.Site('.')
+        page = icecake.Page("./content/this/file/does/not/exist.html", site)
         page.parse_metadata("")
         assert page.get_target() == "this/file/does/not/exist/index.html"
         assert page.url == "/this/file/does/not/exist/"
 
         # Test not html / markdown case
-        page = icecake.Page("this/file/does/not/exist.css")
+        page = icecake.Page("./content/this/file/does/not/exist.css", site)
         page.parse_metadata("")
         assert page.get_target() == "this/file/does/not/exist.css"
         assert page.url == "/this/file/does/not/exist.css"
 
         # Test index case
-        page = icecake.Page("this/file/does/not/index.md")
+        page = icecake.Page("./content/this/file/does/not/index.md", site)
         page.parse_metadata("")
         assert page.get_target() == "this/file/does/not/index.html"
         assert page.url == "/this/file/does/not/"
@@ -59,7 +79,7 @@ template = myfile.html
         meta = """
 slug = some-title
         """
-        page = icecake.Page("this/file/does/not/exist.md")
+        page = icecake.Page("./content/this/file/does/not/exist.md", site)
         page.parse_metadata(meta)
         assert page._get_folder() == "this/file/does/not"
         assert page.get_target() == "this/file/does/not/some-title/index.html"
@@ -72,32 +92,86 @@ date = 2013-01-02
 tags = pie
 ++++
 
-# This is the beginning of my page!
+This is the beginning of my page!
         """
 
-        page = icecake.Page.parse_string("this/file/does/not/exist.md", raw)
-        assert page.body == "# This is the beginning of my page!"
+        site = icecake.Site('.')
+        page = icecake.Page.parse_string("this/file/does/not/exist.md", site, raw)
+        assert page.body == "This is the beginning of my page!"
 
     def test_render(self):
         site = icecake.Site(".")
         site.renderer = jinja2.Environment(loader=jinja2.DictLoader({
-            "markdown.html":"MARKDOWN{{title}}{{content}}",
-            "basic.html":"HTML{{content}}",
-            "just.html":"Waka"
-            }))
+            "markdown.html": "MARKDOWN{{title}}{{content}}",
+            "basic.html": "HTML{{content}}",
+            "just.html": "Waka"
+        }))
 
-        page = icecake.Page("filename.md")
+        page = icecake.Page("filename.md", site)
         page.parse_metadata("title=My Title")
-        page.body="#This is awesome!"
-        assert page.render(site) == "MARKDOWNMy Title<h1>This is awesome!</h1>"
+        page.body = "#This is awesome!"
+        assert page.render() == "MARKDOWNMy Title<h1>This is awesome!</h1>"
 
         page.template="basic.html"
-        assert page.render(site) == "HTML<h1>This is awesome!</h1>"
+        assert page.render() == "HTML<h1>This is awesome!</h1>"
 
         # This case is a bit odd. We don't actually use the page content we
         # parsed, we just let Jinja find the template on disk and render it
         # as-is. This is inconsistent from the markdown case, but works. There
         # may be some opportunity to clean up the API here and remove body or
         # content since only one is actually used.
-        page = icecake.Page("just.html")
-        assert page.render(site) == "Waka"
+        page = icecake.Page("content/just.html", site)
+        assert page.render() == "Waka"
+
+
+class TestSite:
+    def test_initialize(self, tmpdir):
+        site = icecake.Site.initialize(tmpdir.strpath)
+        files = icecake.ls_relative(site.root)
+        # Verify all the things we expected are present
+        for name in templates.keys():
+            assert name in files
+        # Verify we didn't find any extra stuff
+        for file in files:
+            assert templates[file] is not None
+
+    def test_build(self, tmpdir):
+        site = icecake.Site.initialize(tmpdir.strpath)
+        assert isfile(join(site.root, 'content', 'articles.html'))
+
+        site.build()
+        output_files = icecake.ls_relative(join(site.root, 'output'))
+
+        # Make sure all the files are there
+        assert output_files == [
+            'articles/hello-world/index.html',
+            'articles/index.html',
+            'atom.xml',
+            'css/main.css',
+            'css/syntax.css',
+            'index.html',
+            'tags/index.html'
+        ]
+
+    def test_clean_output(self, tmpdir):
+        site = icecake.Site.initialize(tmpdir.strpath)
+        files = icecake.ls_relative(site.root)
+        assert 'output/index.html' not in files
+
+        site.build()
+        files = icecake.ls_relative(site.root)
+        assert 'output/index.html' in files
+
+        site.clean_output()
+        files = icecake.ls_relative(site.root)
+        assert 'output/index.html' not in files
+
+
+class TestTemplates:
+    """
+    Verify that the templates in templates.py match the ones on disk
+    """
+    def test_templates(self):
+        for f in icecake.ls_relative(join(module_root, 'templates')):
+            contents = open(join(module_root, 'templates', f)).read()
+            assert templates[f] == contents
