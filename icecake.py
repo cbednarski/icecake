@@ -576,6 +576,9 @@ def preview(debug):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
 
+    site = Site(curdir)
+    site.build()
+
     watcher = Watcher(curdir)
     watcher_pid = Process(target=watcher.watch)
     watcher_pid.daemon = False
@@ -587,9 +590,7 @@ def preview(debug):
     server_pid.start()
 
     watcher_pid.join()
-
     server_pid.join()
-
 
 
 @cli.command()
