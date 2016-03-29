@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='icecake',
-    version='0.3.1',
+    version='0.3.2',
     py_modules=['icecake', 'templates'],
     url="https://github.com/cbednarski/icecake",
     author="Chris Bednarski",
