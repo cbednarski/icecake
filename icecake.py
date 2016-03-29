@@ -15,6 +15,9 @@ import platform
 import logging
 import os
 from os.path import abspath, basename, dirname, exists, isdir, isfile, join, normpath, relpath, splitext
+from http.server import SimpleHTTPRequestHandler
+from socketserver import TCPServer
+from multiprocessing import Process
 import time
 import shutil
 
@@ -258,7 +261,8 @@ class Page:
 
     def render_to_disk(self):
         output = self.render()
-        target = join(self.site.root, 'output', self.filepath)
+        target = join('output', self.get_target())
+        logging.debug('Writing to %s' % target)
         target_dir = dirname(target)
         if not isdir(target_dir):
             os.makedirs(target_dir)
@@ -405,6 +409,8 @@ class Site:
         finder.pages(tag="family", order="title")
         """
         items = self.pagedata
+        for page in items:
+            logging.debug(page.filepath)
         if path is not None:
             items = [page for page in items if page.filepath.startswith(path)]
         if tag is not None:
@@ -465,9 +471,10 @@ class Handler(watchdog.events.FileSystemEventHandler):
     site = None
 
     def on_created(self, event):
-        data = self.site.cache.read(event.src_path)
-        page = Page.parse_string(event.src_path, self.site, data)
-        page.render_to_disk()
+        if isfile(event.src_path):
+            data = self.site.cache.read(event.src_path)
+            page = Page.parse_string(event.src_path, self.site, data)
+            page.render_to_disk()
 
     def on_deleted(self, event):
         if event.src_path.startswith(join(self.site.root, 'content')) or \
@@ -478,16 +485,18 @@ class Handler(watchdog.events.FileSystemEventHandler):
         # TODO also re-render any pages that depend on this one
         # Even though we need to reparse everything we may want to reuse the page
         # so we can more easily rebuild the dep graph / reference indexes
-        logging.debug(event)
-        path = relpath(event.src_path, self.site.root)
-        logging.debug('rebuilding %s' % path)
-        if self.site.cache.get(path) != self.site.cache.read(path):
-            data = self.site.cache.get(path)
-            page = Page.parse_string(path, self.site, data)
-            page.render_to_disk()
+        if isfile(event.src_path):
+            path = relpath(event.src_path, self.site.root)
+            if self.site.cache.get(path) != self.site.cache.read(path):
+                logging.debug('Change detected for %s', path)
+                data = self.site.cache.get(path)
+                page = Page.parse_string(path, self.site, data)
+                page.render_to_disk()
 
     def on_moved(self, event):
-        pass
+        if isfile(event.dest_path):
+            old_path = relpath(event.src_path, self.site.root)
+            new_path = relpath(event.dest_path, self.site.root)
 
 
 class Watcher:
@@ -508,13 +517,25 @@ class Watcher:
         obs.join()
 
 
+class HTTPHandler(SimpleHTTPRequestHandler):
+    def translate_path(self, path):
+        path = super().translate_path(path)
+        # Since we are serving from the project root instead of content root
+        # we want to insert 'content' into the filepath.
+        path = abspath(join('output', relpath(path)))
+        return path
+
+
 class Server:
     def __init__(self, root):
         self.root = root
         self.site = Site(root)
 
     def serve(self):
-        pass
+        PORT = 8000
+        httpd = TCPServer(("127.0.0.1", PORT), HTTPHandler)
+        print("serving at port", PORT)
+        httpd.serve_forever()
 
 
 curdir = abspath(os.getcwd())
@@ -554,7 +575,21 @@ def build(debug):
 def preview(debug):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
-    Server(curdir).serve()
+
+    watcher = Watcher(curdir)
+    watcher_pid = Process(target=watcher.watch)
+    watcher_pid.daemon = False
+    watcher_pid.start()
+
+    server = Server(curdir)
+    server_pid = Process(target=server.serve)
+    server_pid.daemon = False
+    server_pid.start()
+
+    watcher_pid.join()
+
+    server_pid.join()
+
 
 
 @cli.command()
@@ -563,6 +598,14 @@ def watch(debug):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
     Watcher(curdir).watch()
+
+
+@cli.command()
+@click.option("--debug/--no-debug", default=False)
+def serve(debug):
+    if debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+    Server(curdir).serve()
 
 
 if __name__ == "__main__":
