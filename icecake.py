@@ -56,6 +56,20 @@ def ls_relative(list_path):
     return found
 
 
+class FileCache:
+    def __init__(self):
+        self.items = []
+
+    def read(self, filename):
+        pass
+
+    def set(self, filename, content):
+        self.items[filename] = content
+
+    def get(self, filename):
+        return self.items[filename]
+
+
 class Page:
     """
     A page is any discrete piece of content that will appear in your output

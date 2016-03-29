@@ -112,7 +112,7 @@ This is the beginning of my page!
         page.body = "#This is awesome!"
         assert page.render() == "MARKDOWNMy Title<h1>This is awesome!</h1>"
 
-        page.template="basic.html"
+        page.template = "basic.html"
         assert page.render() == "HTML<h1>This is awesome!</h1>"
 
         # This case is a bit odd. We don't actually use the page content we
@@ -134,6 +134,14 @@ class TestSite:
         # Verify we didn't find any extra stuff
         for file in files:
             assert templates[file] is not None
+
+    def test_render(self, tmpdir):
+        site = icecake.Site.initialize(tmpdir.strpath)
+        site.get_pages()
+        page = site.pages(path='articles/hello-world.md')[0]
+        output = page.render()
+        assert output == open(join(test_root, 'fixtures', 'render', 'hello-world.md.html')).read()
+
 
     def test_build(self, tmpdir):
         site = icecake.Site.initialize(tmpdir.strpath)
