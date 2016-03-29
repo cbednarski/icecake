@@ -15,8 +15,6 @@ import platform
 import logging
 import os
 from os.path import abspath, basename, dirname, exists, isdir, isfile, join, normpath, relpath, splitext
-from http.server import SimpleHTTPRequestHandler
-from socketserver import TCPServer
 from multiprocessing import Process
 import time
 import shutil
@@ -35,9 +33,12 @@ from templates import templates
 if platform.python_version_tuple()[0] == '2':
     import ConfigParser as configparser
     import io
+    from SimpleHTTPServer import SimpleHTTPRequestHandler
+    from SocketServer import TCPServer
 else:
     import configparser
-
+    from http.server import SimpleHTTPRequestHandler
+    from socketserver import TCPServer
 
 __metaclass__ = type
 logging.basicConfig(level=logging.ERROR)
