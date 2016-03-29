@@ -40,8 +40,10 @@ else:
     from http.server import SimpleHTTPRequestHandler
     from socketserver import TCPServer
 
+
 __metaclass__ = type
 logging.basicConfig(level=logging.ERROR)
+click.disable_unicode_literals_warning = True
 
 
 def ls_relative(list_path):
