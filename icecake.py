@@ -522,7 +522,10 @@ class Watcher:
 
 class HTTPHandler(SimpleHTTPRequestHandler):
     def translate_path(self, path):
-        path = super().translate_path(path)
+        if platform.python_version_tuple()[0] == '2':
+            path = SimpleHTTPRequestHandler.translate_path(self, path)
+        else:
+            path = super().translate_path(path)
         # Since we are serving from the project root instead of content root
         # we want to insert 'content' into the filepath.
         path = abspath(join('output', relpath(path)))
