@@ -16,6 +16,7 @@ setup(
         'Markdown',
         'Pygments',
         'python-dateutil',
+        'watchdog',
         'Werkzeug',
     ],
     entry_points='''
