@@ -15,7 +15,7 @@ init:
 	fi
 
 test: init
-	$(pytest) --ignore venv test/
+	$(pytest) --ignore venv -vv test/
 
 freeze:
 	$(pip) freeze > requirements.txt

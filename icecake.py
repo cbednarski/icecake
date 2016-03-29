@@ -37,7 +37,7 @@ else:
 
 
 __metaclass__ = type
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 
 
 def ls_relative(list_path):
@@ -463,7 +463,7 @@ curdir = abspath(os.getcwd())
 
 @click.group()
 def cli():
-    pass
+    logging.basicConfig(level=logging.INFO)
 
 
 @cli.command(help="""
