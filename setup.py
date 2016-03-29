@@ -27,11 +27,9 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
-        'Topic :: Text Processing :: Markup :: HTML',
-        'Topic :: Internet :: WWW/HTTP :: Site Management',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.5'
+        'Programming Language :: Python :: 3.5',
     ],
     keywords="static site generator builder icecake"
 )
