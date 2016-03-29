@@ -14,7 +14,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import platform
 import logging
 import os
-from os.path import abspath, basename, dirname, exists, isdir, join, normpath, relpath, splitext
+from os.path import abspath, basename, dirname, exists, isdir, isfile, join, normpath, relpath, splitext
 import time
 import shutil
 
@@ -56,18 +56,59 @@ def ls_relative(list_path):
     return found
 
 
-class FileCache:
-    def __init__(self):
-        self.items = []
+class ContentCache:
+    def __init__(self, root):
+        self.root = root
+        self.files = {}
+        self.pages = {}
+        self.templates = {}
+
+    def peek(self, filename):
+        """
+        peek when you want to get fresh data from disk but NOT store it in the cache
+        """
+        file = join(self.root, filename)
+        if isfile(file):
+            content = open(file).read()
+            return content
+        return None
 
     def read(self, filename):
-        pass
+        """
+        read when you want to get fresh data from disk and store it in the cache
+        """
+        content = self.peek(filename)
+        if content is not None:
+            self.set(filename, content)
+        return content
 
     def set(self, filename, content):
-        self.items[filename] = content
+        if filename.startswith('content'):
+            # Markdown files are not templates so let's skip those
+            if splitext(filename)[1] != '.md':
+                self.templates[relpath(filename, 'content')] = content
+        if filename.startswith('layouts'):
+            self.templates[relpath(filename, 'layouts')] = content
+        self.files[filename] = content
 
     def get(self, filename):
-        return self.items[filename]
+        if filename in self.files:
+            return self.files[filename]
+        return None
+
+    def delete(self, filename):
+        del(self.files[filename])
+
+    def move(self, old, new):
+        if old not in self.files:
+            return
+        self.set(new, self.get(old))
+        self.delete(old)
+
+    def warm(self):
+        for path in ['content', 'layouts']:
+            for file in ls_relative(join(self.root, path)):
+                self.read(join(path, file))
 
 
 class Page:
@@ -196,6 +237,35 @@ class Page:
         self.url = self._get_url()
         self.parsed = True
 
+    def render(self):
+        """
+        Render the page. All files will be rendered using Jinja. Markdown files
+        with .md or .markdown extension will also use the markdown renderer. By
+        default the base template is markdown.html for markdown and basic.html
+        for everything else. Customize this via the "template" metadata field.
+        """
+        logging.debug("Rendering %s" % self.filepath)
+        if self.ext in [".md", ".markdown"]:
+            self.content = markdown.markdown(self.body, extensions=self.site.markdown_plugins)
+            if self.template is not None:
+                template = self.site.renderer.get_template(self.template)
+            else:
+                template = self.site.renderer.get_template("markdown.html")
+        else:
+            template = self.site.renderer.get_template(self.filepath)
+        self.rendered = template.render(self.__dict__, site=self.site)
+        return self.rendered
+
+    def render_to_disk(self):
+        output = self.render()
+        target = join(self.site.root, 'output', self.filepath)
+        target_dir = dirname(target)
+        if not isdir(target_dir):
+            os.makedirs(target_dir)
+        file = open(target, mode='w')
+        file.write(output)
+        file.close()
+
     @classmethod
     def parse_string(cls, filepath, site, text):
         """
@@ -217,32 +287,13 @@ class Page:
             page.parsed = True
         return page
 
-    def render(self):
-        """
-        Render the page. All files will be rendered using Jinja. Markdown files
-        with .md or .markdown extension will also use the markdown renderer. By
-        default the base template is markdown.html for markdown and basic.html
-        for everything else. Customize this via the "template" metadata field.
-        """
-        logging.debug("Rendering %s" % self.filepath)
-        if self.ext in [".md", ".markdown"]:
-            self.content = markdown.markdown(self.body, extensions=self.site.markdown_plugins)
-            if self.template is not None:
-                template = self.site.renderer.get_template(self.template)
-            else:
-                template = self.site.renderer.get_template("markdown.html")
-        else:
-            template = self.site.renderer.get_template(self.filepath)
-        self.rendered = template.render(self.__dict__, site=self.site)
-        return self.rendered
-
     @classmethod
     def parse_file(cls, filepath, site):
         """
         Read a file and return the Page created by passing it into parse_string
         """
-        text = open(filepath).read()
-        page = cls.parse_string(filepath, site, text)
+        content = open(filepath).read()
+        page = cls.parse_string(filepath, site, content)
         return page
 
 
@@ -273,12 +324,10 @@ class Site:
                 layouts, and static folders.
         """
         self.root = abspath(root)
+        self.cache = ContentCache(root)
+        self.cache.warm()
         self.markdown_plugins = ["markdown.extensions.fenced_code", "markdown.extensions.codehilite"]
-        content_path = join(self.root, "content")
-        logging.debug("Reading content from %s" % content_path)
-        layouts_path = join(self.root, "layouts")
-        logging.debug("Reading layouts from %s" % layouts_path)
-        self.renderer = jinja2.Environment(loader=jinja2.FileSystemLoader([content_path, layouts_path]))
+        self.renderer = jinja2.Environment(loader=jinja2.DictLoader(self.cache.templates))
         self.pagedata = []
 
     def get_pages(self):
@@ -286,11 +335,11 @@ class Site:
         Enumerate and parse all the page files in the static site.
         """
         logging.debug("Getting pages")
-        content_dir = join(self.root, "content")
-        files = ls_relative(content_dir)
-        for file in files:
-            source_file = join(content_dir, file)
-            if not isdir(source_file):
+        for file in self.cache.files:
+            if not file.startswith('content'):
+                continue
+            source_file = join(self.root, file)
+            if isfile(source_file):
                 logging.debug("Parsing %s", source_file)
                 page = Page.parse_file(source_file, self)
                 page.render()
@@ -415,20 +464,30 @@ class Site:
 class Handler(watchdog.events.FileSystemEventHandler):
     site = None
 
-    def on_any_event(self, event):
+    def on_created(self, event):
+        data = self.site.cache.read(event.src_path)
+        page = Page.parse_string(event.src_path, self.site, data)
+        page.render_to_disk()
+
+    def on_deleted(self, event):
+        if event.src_path.startswith(join(self.site.root, 'content')) or \
+                event.src_path.startswith(join(self.site.root, 'layouts')):
+            shutil.rmtree(event.src_path)
+
+    def on_modified(self, event):
+        # TODO also re-render any pages that depend on this one
+        # Even though we need to reparse everything we may want to reuse the page
+        # so we can more easily rebuild the dep graph / reference indexes
         logging.debug(event)
-        # add a file checksum here; something we can calculate quickly. if there
-        # is a modification event but the contents of the file hasn't changed we
-        # don't want to do anything
-        # Also, filter out directory events because we don't usually care about
-        # those
-        if event.src_path.startswith(join(self.site.root, 'content')):
-            # change this to page.render
-            # we will probably need
-            self.site.build()
-        elif event.src_path.startswith(join(self.site.root, 'layouts')):
-            self.site.build()
-        # break these into other types of events
+        path = relpath(event.src_path, self.site.root)
+        logging.debug('rebuilding %s' % path)
+        if self.site.cache.get(path) != self.site.cache.read(path):
+            data = self.site.cache.get(path)
+            page = Page.parse_string(path, self.site, data)
+            page.render_to_disk()
+
+    def on_moved(self, event):
+        pass
 
 
 class Watcher:

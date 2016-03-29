@@ -11,13 +11,60 @@ test_root = dirname(abspath(__file__))
 
 class TestFunctions:
     def test_ls_relative(self):
-        items = icecake.ls_relative(join(test_root, 'fixtures/ls'))
+        items = icecake.ls_relative(join(test_root, 'fixtures', 'ls'))
         assert items == [
             'a.txt',
             'b.md',
             'c.html',
             'd/e.css'
         ]
+
+
+class TestContentCache:
+    def test_read(self):
+        cache = icecake.ContentCache(join(module_root, 'templates'))
+
+        # Read from content
+        helloworld = open(join(module_root, 'templates', 'content', 'articles', 'hello-world.md')).read()
+        assert cache.read('content/articles/hello-world.md') == helloworld
+        assert cache.get('content/articles/hello-world.md') == helloworld
+        cache.set('content/articles/hello-world.md', 'b')
+        assert cache.get('content/articles/hello-world.md') == 'b'
+
+        # Read from layouts
+        basic = open(join(module_root, 'templates', 'layouts', 'basic.html')).read()
+        assert cache.read('layouts/basic.html') == basic
+
+        # Read missing file
+        assert cache.read('layouts/nope.html') is None
+
+    def test_missing(self):
+        cache = icecake.ContentCache(join(module_root, 'templates'))
+        assert cache.get('nope') is None
+
+    def test_delete(self):
+        cache = icecake.ContentCache(join(module_root, 'templates'))
+        cache.set('content/pie.md', 'delicious')
+        assert cache.get('content/pie.md') == 'delicious'
+        cache.delete('content/pie.md')
+        assert cache.get('content/pie.md') is None
+
+    def test_move(self):
+        cache = icecake.ContentCache(join(module_root, 'templates'))
+        cache.set('content/pie.md', 'delicious')
+        cache.move('content/pie.md', 'content/cake.md')
+        assert cache.get('content/pie.md') is None
+        assert cache.get('content/cake.md') == 'delicious'
+
+        # Doesn't exist; no-op
+        cache.move('nope', 'yep')
+        assert cache.get('yep') is None
+
+    def test_warm(self):
+        cache = icecake.ContentCache(join(module_root, 'templates'))
+        cache.warm()
+        basic = open(join(module_root, 'templates', 'layouts', 'basic.html')).read()
+        assert cache.get('layouts/basic.html') == basic
 
 
 class TestPage:
@@ -141,7 +188,6 @@ class TestSite:
         page = site.pages(path='articles/hello-world.md')[0]
         output = page.render()
         assert output == open(join(test_root, 'fixtures', 'render', 'hello-world.md.html')).read()
-
 
     def test_build(self, tmpdir):
         site = icecake.Site.initialize(tmpdir.strpath)
