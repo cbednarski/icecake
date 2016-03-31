@@ -4,11 +4,12 @@ Icecake
 
 This module provides a simple static site builder, similar to pelican or
 octopress. It is intended to be small, light, and easy to modify. Out of the box
-it supports the following features:
+it sports the following features:
 
 - Markdown formatting
 - Pygments source code highlighting
-- Jinja 2 templates
+- Jinja templates
+- Automatically rebuilds when you edit things
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import platform
@@ -44,6 +45,11 @@ else:
 __metaclass__ = type
 logging.basicConfig(level=logging.ERROR)
 click.disable_unicode_literals_warning = True
+curdir = abspath(os.getcwd())
+
+
+def ui(*args, **kwargs):
+    pass
 
 
 def ls_relative(list_path):
@@ -252,7 +258,9 @@ class Page:
         """
         logging.debug("Rendering %s" % self.filepath)
         if self.ext in [".md", ".markdown"]:
-            self.content = markdown.markdown(self.body, extensions=self.site.markdown_plugins)
+            self.content = markdown.markdown(self.body,
+                                             extensions=self.site.markdown_plugins,
+                                             extension_configs=self.site.markdown_options)
             if self.template is not None:
                 template = self.site.renderer.get_template(self.template)
             else:
@@ -266,6 +274,7 @@ class Page:
         output = self.render()
         target = join('output', self.get_target())
         logging.debug('Writing to %s' % target)
+        ui('Generating %s' % target)
         target_dir = dirname(target)
         if not isdir(target_dir):
             os.makedirs(target_dir)
@@ -334,8 +343,52 @@ class Site:
         self.cache = ContentCache(root)
         self.cache.warm()
         self.markdown_plugins = ["markdown.extensions.fenced_code", "markdown.extensions.codehilite"]
+        self.markdown_options = {
+            "codehilite": {
+                "linenums": False,
+                "guess_lang": False,
+            }
+        }
         self.renderer = jinja2.Environment(loader=jinja2.DictLoader(self.cache.templates))
         self.pagedata = []
+
+    def get_target(self, path):
+        """Convert a path from static to output"""
+        path = self.relpath(path)
+        if path.startswith('static'):
+            return join(self.root, 'output', relpath(path, 'static'))
+        raise ValueError('Invalid path %s; expected a path under static')
+
+    def relpath(self, path):
+        """Get path relative to the site root"""
+        return relpath(join(self.root, getattr(path, 'src_path', path)), self.root)
+
+    def is_content(self, path):
+        return self.relpath(path).startswith('content')
+
+    def is_layout(self, path):
+        return self.relpath(path).startswith('layouts')
+
+    def is_static(self, path):
+        return self.relpath(path).startswith('static')
+
+    def copy_static(self, path):
+        source = join(self.root, 'static', path)
+        target = self.get_target(source)
+        target_dir = dirname(target)
+        if not isdir(target_dir):
+            logging.debug('Creating directory %s' % target_dir)
+            os.makedirs(target_dir, mode=0o755)
+        logging.debug('Copying static file to %s' % target)
+        shutil.copy(source, target)
+
+    def copy_all_static(self):
+        logging.debug('Copying static files')
+        static_dir = join(self.root, 'static')
+        sources = ls_relative(static_dir)
+        for source in sources:
+            if isfile(join(self.root, 'static', source)):
+                self.copy_static(source)
 
     def get_pages(self):
         """
@@ -353,45 +406,17 @@ class Site:
                 self.pagedata.append(page)
         return self.pagedata
 
-    def copy_static(self):
-        logging.debug("Copying static files")
-        static_dir = abspath(join(self.root, "static"))
-        entries = os.walk(static_dir)
-        for path, dirs, files in entries:
-            for file in files:
-                source_path = join(path, file)
-                source_file = "." + source_path.replace(static_dir, "")
-                output_file = normpath(join(self.root, "output", source_file))
-                if isdir(source_path):
-                    continue
-                logging.debug("Copying static file %s", output_file)
-                output_path = normpath(dirname(output_file))
-
-                if not exists(output_path):
-                    logging.debug("Making directory %s", output_path)
-                    os.makedirs(output_path, mode=0o755)
-                contents = open(source_path, "rb").read()
-                open(output_file, "wb").write(contents)
-
     def build(self):
         """
         Build the site. This method originates all of the calls to discover,
         render, and place pages in the output directory. If you want to
         customize how your site is built, this is a good place to start.
         """
+        self.clean_output()
         self.pagedata = self.get_pages()
         for page in self.pagedata:
-            output_filename = join(self.root, "output", page.get_target())
-            logging.debug("Preparing to write %s", output_filename)
-            output_path = dirname(output_filename)
-            if not exists(output_path):
-                logging.debug("Making directory %s", output_path)
-                os.makedirs(output_path, mode=0o755)
-
-            open(output_filename, mode="w").write(page.render())
-            logging.info('Wrote %s', page.filepath)
-
-        self.copy_static()
+            page.render_to_disk()
+        self.copy_all_static()
 
     def tags(self):
         tagnames = set()
@@ -464,7 +489,7 @@ class Site:
                 os.makedirs(target_dir)
 
             with open(target, mode="w") as f:
-                logging.info("Writing %s" % target)
+                logging.debug("Writing %s" % target)
                 f.write(contents)
                 f.close()
         return Site(root)
@@ -473,31 +498,43 @@ class Site:
 class Handler(watchdog.events.FileSystemEventHandler):
     site = None
 
+    def is_watched(self, event):
+        """Whether we are watching this path at all"""
+        return self.site.is_content(event) or self.site.is_layout(event) or self.site.is_static(event)
+
     def on_created(self, event):
         if isfile(event.src_path):
-            data = self.site.cache.read(event.src_path)
-            page = Page.parse_string(event.src_path, self.site, data)
-            page.render_to_disk()
+            if self.site.is_content(event):
+                data = self.site.cache.read(event.src_path)
+                page = Page.parse_string(event.src_path, self.site, data)
+                page.render_to_disk()
+            elif self.site.is_static(event):
+                self.site.copy_static(event.src_path)
 
     def on_deleted(self, event):
-        if event.src_path.startswith(join(self.site.root, 'content')) or \
-                event.src_path.startswith(join(self.site.root, 'layouts')):
+        if self.is_watched(event.src_path):
+            logging.debug('Deletion detected for %s', event.src_path)
             shutil.rmtree(event.src_path)
 
     def on_modified(self, event):
-        # TODO also re-render any pages that depend on this one
-        # Even though we need to reparse everything we may want to reuse the page
-        # so we can more easily rebuild the dep graph / reference indexes
         if isfile(event.src_path):
-            path = relpath(event.src_path, self.site.root)
-            if self.site.cache.get(path) != self.site.cache.read(path):
-                logging.debug('Change detected for %s', path)
-                data = self.site.cache.get(path)
-                page = Page.parse_string(path, self.site, data)
-                page.render_to_disk()
+            if self.is_watched(event):
+                logging.debug('Change detected for %s', event.src_path)
+            if self.site.is_content(event):
+                path = relpath(event.src_path, self.site.root)
+                if self.site.cache.get(path) != self.site.cache.read(path):
+                    data = self.site.cache.get(path)
+                    page = Page.parse_string(path, self.site, data)
+                    page.render_to_disk()
+                    # TODO re-render upstream pages
+            elif self.site.is_static(event):
+                self.site.copy_static(event.src_path)
+            elif self.site.is_layout(event):
+                # TODO re-render upstream pages
+                pass
 
     def on_moved(self, event):
-        if isfile(event.dest_path):
+        if isfile(event.dest_path) and self.is_watched(event):
             old_path = relpath(event.src_path, self.site.root)
             new_path = relpath(event.dest_path, self.site.root)
 
@@ -510,7 +547,9 @@ class Watcher:
 
     def watch(self):
         obs = watchdog.observers.Observer()
-        obs.schedule(Handler(), join(self.root, 'content'), recursive=True)
+        obs.schedule(Handler(), join(self.root), recursive=True)
+        logging.debug('Watching for changes in %s' % self.root)
+        ui('Watching for changes in %s' % self.root)
         obs.start()
         try:
             while True:
@@ -537,19 +576,20 @@ class Server:
         self.root = root
         self.site = Site(root)
 
-    def serve(self):
-        PORT = 8000
-        httpd = TCPServer(("127.0.0.1", PORT), HTTPHandler)
-        print("serving at port", PORT)
-        httpd.serve_forever()
-
-
-curdir = abspath(os.getcwd())
+    def serve(self, address, port):
+        httpd = TCPServer((address, port), HTTPHandler)
+        logging.debug('Listening on http://%s:%s/' % (address, port))
+        ui('Listening on http://%s:%s/' % (address, port))
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            httpd.shutdown()
 
 
 @click.group()
 def cli():
-    logging.basicConfig(level=logging.INFO)
+    global ui
+    ui = click.echo
 
 
 @cli.command(help="""
@@ -578,7 +618,9 @@ def build(debug):
 
 @cli.command()
 @click.option("--debug/--no-debug", default=False)
-def preview(debug):
+@click.option("--address", '-a', default="127.0.0.1", type=str)
+@click.option("--port", '-p', default=8000, type=int)
+def preview(debug, address, port):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
 
@@ -591,9 +633,11 @@ def preview(debug):
     watcher_pid.start()
 
     server = Server(curdir)
-    server_pid = Process(target=server.serve)
+    server_pid = Process(target=server.serve, args=(address, port))
     server_pid.daemon = False
     server_pid.start()
+
+    click.echo('Use Ctrl-C to quit')
 
     watcher_pid.join()
     server_pid.join()
@@ -612,7 +656,7 @@ def watch(debug):
 def serve(debug):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
-    Server(curdir).serve()
+    Server(curdir).serve("127.0.0.1", 8000)
 
 
 if __name__ == "__main__":

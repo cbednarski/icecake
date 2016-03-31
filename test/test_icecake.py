@@ -2,7 +2,7 @@ import pytest
 import icecake
 import jinja2
 from templates import templates
-from os.path import abspath, dirname, isfile, join
+from os.path import abspath, dirname, isdir, isfile, join
 
 
 module_root = dirname(dirname(abspath(__file__)))
@@ -181,6 +181,33 @@ class TestSite:
         # Verify we didn't find any extra stuff
         for file in files:
             assert templates[file] is not None
+
+    def test_get_target(self):
+        site = icecake.Site(dirname(__file__))
+        assert site.get_target('static/pie.css') == join(dirname(__file__), 'output/pie.css')
+
+    def test_is_content(self):
+        site = icecake.Site(dirname(__file__))
+        assert site.is_content('content/blah.html')
+        assert not site.is_content('output/blah.html')
+
+    def test_is_layout(self):
+        site = icecake.Site(dirname(__file__))
+        assert site.is_layout('layouts/blah.html')
+        assert not site.is_layout('output/blah.html')
+
+    def test_is_static(self):
+        site = icecake.Site(dirname(__file__))
+        assert site.is_static('static/blah.html')
+        assert not site.is_static('output/blah.html')
+
+    def test_copy_static(self, tmpdir):
+        site = icecake.Site.initialize(tmpdir.strpath)
+        site.copy_static('css/main.css')
+        target = join(site.root, 'output', 'css', 'main.css')
+        assert isdir(join(site.root, 'output'))
+        assert isdir(join(site.root, 'output', 'css'))
+        assert isfile(target)
 
     def test_render(self, tmpdir):
         site = icecake.Site.initialize(tmpdir.strpath)
