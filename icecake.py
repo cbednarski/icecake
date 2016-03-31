@@ -537,6 +537,7 @@ class Handler(watchdog.events.FileSystemEventHandler):
         if isfile(event.dest_path) and self.is_watched(event):
             old_path = relpath(event.src_path, self.site.root)
             new_path = relpath(event.dest_path, self.site.root)
+            # TODO implement moving things (maybe just fire delete / create events)
 
 
 class Watcher:
