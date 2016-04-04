@@ -412,34 +412,35 @@ class Site:
         return self.pagedata
 
     def list_dependents(self, filepath):
-        deps = set([])
-        # If the page is markdown.html then we need to add all of the markdown pages
+        depset = set()
+        # If the page is markdown.html then we need to add all of the markdown
+        # pages.
+        # TODO add support for markdown pages that specify a custom template
         if filepath == 'markdown.html':
             for _, page in self.pagedata.items():
                 if page.ext in ['.md', '.markdown']:
-                    deps.add(page.filepath)
+                    depset.add(page.filepath)
         else:
             for path, body in self.cache.templates.items():
                 ast = self.renderer.parse(body)
                 pagedeps = jinja2.meta.find_referenced_templates(ast)
                 if filepath in pagedeps:
                     for item in self.list_dependents(path):
-                        deps.add(item)
+                        depset.add(item)
             for _, page in self.pagedata.items():
                 ast = self.renderer.parse(page.body)
                 pagedeps = jinja2.meta.find_referenced_templates(ast)
                 if filepath in list(pagedeps):
-                    deps.add(page.filepath)
+                    depset.add(page.filepath)
                     for item in self.list_dependents(page.filepath):
-                        deps.add(item)
-        ldeps = list(deps)
-        ldeps.sort()
-        return ldeps
+                        depset.add(item)
+        deplist = list(depset)
+        deplist.sort()
+        return deplist
 
     def render_dependents(self, filepath):
         for item in self.list_dependents(filepath):
             self.pagedata[item].render_to_disk()
-
 
     def build(self):
         """
@@ -536,7 +537,11 @@ class Handler(watchdog.events.FileSystemEventHandler):
     site = None
 
     def is_watched(self, event):
-        """Whether we are watching this path at all"""
+        """
+        Whether we are watching this path at all. This guards against
+        triggering logic on the output folder or other folders the user may
+        have created here.
+        """
         return self.site.is_content(event) or self.site.is_layout(event) or self.site.is_static(event)
 
     def on_created(self, event):
@@ -554,10 +559,9 @@ class Handler(watchdog.events.FileSystemEventHandler):
             shutil.rmtree(event.src_path)
 
     def on_modified(self, event):
-        if isfile(event.src_path):
+        if isfile(event.src_path) and self.is_watched(event):
             path = self.site.relpath(event.src_path)
-            if self.is_watched(event):
-                logging.debug('Change detected for %s', event.src_path)
+            logging.debug('Change detected for %s', event.src_path)
             if self.site.is_content(event):
                 if self.site.cache.get(path) != self.site.cache.read(path):
                     data = self.site.cache.get(path)
@@ -600,6 +604,8 @@ class Watcher:
 
 
 class HTTPHandler(SimpleHTTPRequestHandler):
+    site = None
+
     def translate_path(self, path):
         if platform.python_version_tuple()[0] == '2':
             path = SimpleHTTPRequestHandler.translate_path(self, path)
@@ -617,6 +623,7 @@ class Server:
         self.site = Site(root)
 
     def serve(self, address, port):
+        HTTPHandler.site = self.site
         httpd = TCPServer((address, port), HTTPHandler)
         logging.debug('Listening on http://%s:%s/' % (address, port))
         ui('Listening on http://%s:%s/' % (address, port))
