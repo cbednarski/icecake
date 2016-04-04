@@ -23,6 +23,7 @@ import shutil
 
 import click
 import jinja2
+import jinja2.meta
 import markdown
 from dateutil.parser import parse as dateparse
 from werkzeug.contrib.atom import AtomFeed
@@ -74,6 +75,7 @@ class ContentCache:
         self.files = {}
         self.pages = {}
         self.templates = {}
+        self.rebuild_index = {}
 
     def peek(self, filename):
         """
@@ -282,15 +284,6 @@ class Page:
         file.write(output)
         file.close()
 
-    def list_dependents(self):
-        ast = self.site.renderer.parse(self.body)
-        deps = jinja2.meta.find_referenced_templates(ast)
-        return deps
-
-    def render_dependents(self):
-        deps = self.list_dependents()
-        print(deps)
-
     @classmethod
     def parse_string(cls, filepath, site, text):
         """
@@ -359,7 +352,8 @@ class Site:
             }
         }
         self.renderer = jinja2.Environment(loader=jinja2.DictLoader(self.cache.templates))
-        self.pagedata = []
+        self.pagedata = {}
+        self.get_pages()
 
     def get_target(self, path):
         """Convert a path from static to output"""
@@ -404,6 +398,7 @@ class Site:
         Enumerate and parse all the page files in the static site.
         """
         logging.debug("Getting pages")
+        pages = {}
         for file in self.cache.files:
             if not file.startswith('content'):
                 continue
@@ -412,8 +407,40 @@ class Site:
                 logging.debug("Parsing %s", source_file)
                 page = Page.parse_file(source_file, self)
                 page.render()
-                self.pagedata.append(page)
+                pages[page.filepath] = page
+        self.pagedata = pages
         return self.pagedata
+
+    def list_dependents(self, filepath):
+        deps = set([])
+        # If the page is markdown.html then we need to add all of the markdown pages
+        if filepath == 'markdown.html':
+            for _, page in self.pagedata.items():
+                if page.ext in ['.md', '.markdown']:
+                    deps.add(page.filepath)
+        else:
+            for path, body in self.cache.templates.items():
+                print(path)
+                ast = self.renderer.parse(body)
+                pagedeps = jinja2.meta.find_referenced_templates(ast)
+                if filepath in pagedeps:
+                    for item in self.list_dependents(path):
+                        deps.add(item)
+            for _, page in self.pagedata.items():
+                ast = self.renderer.parse(page.body)
+                pagedeps = jinja2.meta.find_referenced_templates(ast)
+                if filepath in list(pagedeps):
+                    deps.add(page.filepath)
+                    for item in self.list_dependents(page.filepath):
+                        deps.add(item)
+        ldeps = list(deps)
+        ldeps.sort()
+        return ldeps
+
+    def render_dependents(self, filepath):
+        for item in self.list_dependents(filepath):
+            self.pagedata[item].render_to_disk()
+
 
     def build(self):
         """
@@ -423,13 +450,13 @@ class Site:
         """
         self.clean_output()
         self.pagedata = self.get_pages()
-        for page in self.pagedata:
+        for _, page in self.pagedata.items():
             page.render_to_disk()
         self.copy_all_static()
 
     def tags(self):
         tagnames = set()
-        for page in self.pagedata:
+        for path, page in self.pagedata.items():
             if page.tags:
                 tagnames = tagnames.union(set(page.tags))
         taglist = list(tagnames)
@@ -445,7 +472,7 @@ class Site:
         finder.pages(path="articles", limit=5, order="-date")
         finder.pages(tag="family", order="title")
         """
-        items = self.pagedata
+        items = self.pagedata.values()
         for page in items:
             logging.debug(page.filepath)
         if path is not None:
@@ -537,12 +564,11 @@ class Handler(watchdog.events.FileSystemEventHandler):
                     data = self.site.cache.get(path)
                     page = Page.parse_string(path, self.site, data)
                     page.render_to_disk()
-                    # TODO re-render upstream pages
+                    self.site.render_dependents(self.site.relpath(event.src_path))
             elif self.site.is_static(event):
                 self.site.copy_static(event.src_path)
             elif self.site.is_layout(event):
-                # TODO re-render upstream pages
-                pass
+                self.site.render_dependents(self.site.relpath(event.src_path))
 
     def on_moved(self, event):
         if isfile(event.dest_path) and self.is_watched(event):

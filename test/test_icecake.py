@@ -248,6 +248,39 @@ class TestSite:
         assert 'output/index.html' not in files
 
 
+class TestUpdates:
+    def test_list_dependents(self, tmpdir):
+        site = icecake.Site.initialize(tmpdir.strpath)
+        items = site.list_dependents('markdown.html')
+        assert items[0] == 'articles/hello-world.md'
+
+        items = site.list_dependents('basic.html')
+        items.sort()
+        # We expect to find all of the content pages that need to be
+        # re-rendered. We DO NOT expect to find markdown.html because
+        # we are not going to render that page (it's a template) but
+        # we DO expect to find articles/hello-world.md because markdown
+        # is affected.
+        assert items == [
+            'articles.html',
+            'articles/hello-world.md',
+            'index.html',
+            'tags.html',
+        ]
+
+    def test_render_dependents(self, tmpdir):
+        site = icecake.Site.initialize(tmpdir.strpath)
+        site.render_dependents('markdown.html')
+        files = icecake.ls_relative(site.root)
+        print(files)
+        assert 'output/articles/hello-world/index.html' in files
+
+
+class TestCLI:
+    # TODO add tests for the CLI
+    pass
+
+
 class TestTemplates:
     """
     Verify that the templates in templates.py match the ones on disk
