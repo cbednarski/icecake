@@ -272,7 +272,7 @@ class Page:
 
     def render_to_disk(self):
         output = self.render()
-        target = join('output', self.get_target())
+        target = join(self.site.root, 'output', self.get_target())
         logging.debug('Writing to %s' % target)
         ui('Generating %s' % target)
         target_dir = dirname(target)
@@ -281,6 +281,15 @@ class Page:
         file = open(target, mode='w')
         file.write(output)
         file.close()
+
+    def list_dependents(self):
+        ast = self.site.renderer.parse(self.body)
+        deps = jinja2.meta.find_referenced_templates(ast)
+        return deps
+
+    def render_dependents(self):
+        deps = self.list_dependents()
+        print(deps)
 
     @classmethod
     def parse_string(cls, filepath, site, text):
@@ -476,7 +485,9 @@ class Site:
         """
         Delete everything in the output folder so we can perform a clean build
         """
-        shutil.rmtree(join(self.root, 'output'))
+        output_dir = join(self.root, 'output')
+        if isdir(output_dir):
+            shutil.rmtree(output_dir)
 
     @classmethod
     def initialize(cls, root):
@@ -535,9 +546,11 @@ class Handler(watchdog.events.FileSystemEventHandler):
 
     def on_moved(self, event):
         if isfile(event.dest_path) and self.is_watched(event):
-            old_path = relpath(event.src_path, self.site.root)
-            new_path = relpath(event.dest_path, self.site.root)
-            # TODO implement moving things (maybe just fire delete / create events)
+            self.on_deleted(event)
+            # This is a hack and probably has some bad consequence I'm not
+            # thinking about right now.
+            event.src_path = event.dest_path
+            self.on_created(event)
 
 
 class Watcher:
