@@ -420,7 +420,6 @@ class Site:
                     deps.add(page.filepath)
         else:
             for path, body in self.cache.templates.items():
-                print(path)
                 ast = self.renderer.parse(body)
                 pagedeps = jinja2.meta.find_referenced_templates(ast)
                 if filepath in pagedeps:
@@ -556,19 +555,20 @@ class Handler(watchdog.events.FileSystemEventHandler):
 
     def on_modified(self, event):
         if isfile(event.src_path):
+            path = self.site.relpath(event.src_path)
             if self.is_watched(event):
                 logging.debug('Change detected for %s', event.src_path)
             if self.site.is_content(event):
-                path = relpath(event.src_path, self.site.root)
                 if self.site.cache.get(path) != self.site.cache.read(path):
                     data = self.site.cache.get(path)
                     page = Page.parse_string(path, self.site, data)
                     page.render_to_disk()
-                    self.site.render_dependents(self.site.relpath(event.src_path))
+                    self.site.render_dependents(relpath(self.site.relpath(event.src_path), 'content'))
             elif self.site.is_static(event):
                 self.site.copy_static(event.src_path)
             elif self.site.is_layout(event):
-                self.site.render_dependents(self.site.relpath(event.src_path))
+                if self.site.cache.get(path) != self.site.cache.read(path):
+                    self.site.render_dependents(relpath(self.site.relpath(event.src_path), 'layouts'))
 
     def on_moved(self, event):
         if isfile(event.dest_path) and self.is_watched(event):

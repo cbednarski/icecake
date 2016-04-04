@@ -272,7 +272,6 @@ class TestUpdates:
         site = icecake.Site.initialize(tmpdir.strpath)
         site.render_dependents('markdown.html')
         files = icecake.ls_relative(site.root)
-        print(files)
         assert 'output/articles/hello-world/index.html' in files
 
 
