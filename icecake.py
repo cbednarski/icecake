@@ -32,6 +32,7 @@ import watchdog.events
 
 
 from templates import templates
+from livejs import livejs
 if platform.python_version_tuple()[0] == '2':
     import ConfigParser as configparser
     import io
@@ -269,7 +270,12 @@ class Page:
                 template = self.site.renderer.get_template("markdown.html")
         else:
             template = self.site.renderer.get_template(self.filepath)
-        self.rendered = template.render(self.__dict__, site=self.site)
+        # Inject livejs code (optional)
+        if self.site.preview_mode:
+            livejs_code = "<script>"+livejs+"</script>"
+        else:
+            livejs_code = ""
+        self.rendered = template.render(self.__dict__, site=self.site, livejs=livejs_code)
         return self.rendered
 
     def render_to_disk(self):
@@ -335,12 +341,13 @@ class Site:
     building your site.
     """
 
-    def __init__(self, root):
+    def __init__(self, root, preview_mode=False):
         """
         Keyword Arguments:
         root -- The path to the static site folder which includes the pages,
                 layouts, and static folders.
         """
+        self.preview_mode = preview_mode
         self.root = abspath(root)
         self.cache = ContentCache(root)
         self.cache.warm()
@@ -584,16 +591,15 @@ class Handler(watchdog.events.FileSystemEventHandler):
 
 
 class Watcher:
-    def __init__(self, root):
-        self.root = root
-        self.site = Site(root)
-        Handler.site = self.site
+    def __init__(self, site):
+        self.site = site
+        Handler.site = site
 
     def watch(self):
         obs = watchdog.observers.Observer()
-        obs.schedule(Handler(), join(self.root), recursive=True)
-        logging.debug('Watching for changes in %s' % self.root)
-        ui('Watching for changes in %s' % self.root)
+        obs.schedule(Handler(), join(self.site.root), recursive=True)
+        logging.debug('Watching for changes in %s' % self.site.root)
+        ui('Watching for changes in %s' % self.site.root)
         obs.start()
         try:
             while True:
@@ -616,21 +622,45 @@ class HTTPHandler(SimpleHTTPRequestHandler):
         path = abspath(join('output', relpath(path)))
         return path
 
+    def log_request(self, code='-', size='-'):
+        # Don't log HEAD requests because these are very spammy with livejs turned on
+        if self.command == 'HEAD':
+            return
+        if platform.python_version_tuple()[0] == '2':
+            SimpleHTTPRequestHandler.log_request(self, code, size)
+        else:
+            super().log_request(code, size)
+
+
+class HTTPServer(TCPServer):
+    def server_activate(self):
+        ui('Server started successfully')
+        logging.debug('Listening on http://%s:%s/' % self.server_address)
+        if platform.python_version_tuple()[0] == '2':
+            TCPServer.server_activate(self)
+        else:
+            super().server_activate()
+
 
 class Server:
-    def __init__(self, root):
-        self.root = root
-        self.site = Site(root)
+    def __init__(self, site):
+        self.site = site
 
     def serve(self, address, port):
         HTTPHandler.site = self.site
-        httpd = TCPServer((address, port), HTTPHandler)
-        logging.debug('Listening on http://%s:%s/' % (address, port))
-        ui('Listening on http://%s:%s/' % (address, port))
-        try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            httpd.shutdown()
+        ui('Starting server on http://%s:%s/' % (address, port))
+        ui('HEAD requests are omitted from the logs')
+        while True:
+            try:
+
+                httpd = HTTPServer((address, port), HTTPHandler)
+                httpd.serve_forever()
+            except OSError:
+                ui('ERROR: Listen socket is busy; will retry in 5 seconds')
+                time.sleep(5)
+            except KeyboardInterrupt:
+                httpd.shutdown()
+                break
 
 
 @click.group()
@@ -671,15 +701,15 @@ def preview(debug, address, port):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    site = Site(curdir)
+    site = Site(curdir, preview_mode=True)
     site.build()
 
-    watcher = Watcher(curdir)
+    watcher = Watcher(site)
     watcher_pid = Process(target=watcher.watch)
     watcher_pid.daemon = False
     watcher_pid.start()
 
-    server = Server(curdir)
+    server = Server(site)
     server_pid = Process(target=server.serve, args=(address, port))
     server_pid.daemon = False
     server_pid.start()
@@ -695,7 +725,7 @@ def preview(debug, address, port):
 def watch(debug):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
-    Watcher(curdir).watch()
+    Watcher(Site(curdir, preview_mode=True)).watch()
 
 
 @cli.command()
@@ -703,7 +733,7 @@ def watch(debug):
 def serve(debug):
     if debug:
         logging.getLogger().setLevel(logging.DEBUG)
-    Server(curdir).serve("127.0.0.1", 8000)
+    Server(Site(curdir, preview_mode=True)).serve("127.0.0.1", 8000)
 
 
 if __name__ == "__main__":
