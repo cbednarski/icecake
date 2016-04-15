@@ -16,7 +16,7 @@ Icecake aims to be simple. It has a simple license. It does not support
 lots of features. For example, it does not support plugins, themes,
 different templating backends, or any of a long list of other features.
 
-Icecake is less than 500 lines of python and still has everything you
+Icecake is less than 750 lines of python and still has everything you
 need to have a pleasant time writing and updating your personal website
 or blog.
 
