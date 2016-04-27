@@ -29,3 +29,11 @@ inspect:
 
 clean:
 	rm -rf venv/
+	rm -rf .tox/
+	rm -rf .cache/
+
+clean-all: clean
+	rm -rf dist/
+	rm -rf icecake.egg-info/
+
+.PHONY: build clean clean-all freeze init inspect publish test
