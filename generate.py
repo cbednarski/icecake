@@ -1,7 +1,7 @@
 import os
 
 
-import icecake
+from icecake import icecake, templates
 
 
 def generate():

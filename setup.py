@@ -19,9 +19,10 @@ setup(
         'watchdog',
         'Werkzeug',
     ],
+    packages=['icecake'],
     entry_points='''
         [console_scripts]
-        icecake=icecake:cli
+        icecake=icecake.icecake:cli
     ''',
     classifiers=[
         'Development Status :: 4 - Beta',

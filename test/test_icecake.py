@@ -1,5 +1,5 @@
 import pytest
-import icecake
+from icecake import icecake
 import jinja2
 from templates import templates
 from os.path import abspath, dirname, isdir, isfile, join

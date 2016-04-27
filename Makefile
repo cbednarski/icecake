@@ -15,7 +15,7 @@ init:
 	fi
 
 test: init
-	$(pytest) --ignore venv -vv test/
+	tox
 
 freeze:
 	$(pip) freeze > requirements.txt
@@ -25,7 +25,7 @@ publish:
 	$(python) setup.py sdist upload
 
 inspect:
-	$(python) setup.py sdist && tar -tzf dist/icecake-0.3.1.tar.gz
+	$(python) setup.py sdist && tar -tzf dist/icecake-0.5.0.tar.gz
 
 clean:
 	rm -rf venv/

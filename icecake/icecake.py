@@ -31,8 +31,8 @@ import watchdog.observers
 import watchdog.events
 
 
-from templates import templates
-from livejs import livejs
+from .templates import templates
+from .livejs import livejs
 if platform.python_version_tuple()[0] == '2':
     import ConfigParser as configparser
     import io
