@@ -1,15 +1,15 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
+    # packaging information that is likely to be updated between versions
     name='icecake',
     version='0.5.0',
-    py_modules=['icecake', 'templates'],
-    url="https://github.com/cbednarski/icecake",
-    author="Chris Bednarski",
-    author_email="banzaimonkey@gmail.com",
-    description="An easy and cool static site generator",
-    license="MIT",
-    long_description=open('README.rst').read(),
+    packages=['icecake'],
+    py_modules=['cli', 'templates', 'livejs'],
+    entry_points='''
+        [console_scripts]
+        icecake=icecake.cli:cli
+    ''',
     install_requires=[
         'Click',
         'Jinja2',
@@ -19,11 +19,14 @@ setup(
         'watchdog',
         'Werkzeug',
     ],
-    packages=['icecake'],
-    entry_points='''
-        [console_scripts]
-        icecake=icecake.icecake:cli
-    ''',
+
+    # pypy stuff that is not likely to change between versions
+    url="https://github.com/cbednarski/icecake",
+    author="Chris Bednarski",
+    author_email="banzaimonkey@gmail.com",
+    description="An easy and cool static site generator",
+    license="MIT",
+    long_description=open('README.rst').read(),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
