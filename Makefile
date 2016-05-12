@@ -25,7 +25,7 @@ publish:
 	$(python) setup.py sdist upload
 
 inspect:
-	$(python) setup.py sdist && tar -tzf dist/icecake-0.5.0.tar.gz
+	$(python) setup.py sdist && tar -tzf dist/icecake-0.6.0.tar.gz
 
 clean:
 	rm -rf venv/

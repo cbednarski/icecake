@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     # packaging information that is likely to be updated between versions
     name='icecake',
-    version='0.5.0',
+    version='0.6.0',
     packages=['icecake'],
     py_modules=['cli', 'templates', 'livejs'],
     entry_points='''
