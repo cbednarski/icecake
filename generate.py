@@ -1,13 +1,13 @@
 import os
 
 
-from icecake import icecake, templates
+from icecake import cli, templates
 
 
 def generate():
 
     output = 'templates = {\n'
-    for filename in icecake.ls_relative('templates'):
+    for filename in cli.ls_relative('templates'):
         contents = open(os.path.join('templates', filename)).read()
         output += '"%s":\n' % filename
         output += '"""' + contents + '""",\n'

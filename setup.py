@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from codec import open
+from codecs import open
 
 setup(
     # packaging information that is likely to be updated between versions

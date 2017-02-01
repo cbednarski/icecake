@@ -1,7 +1,7 @@
 FROM debian:latest
 MAINTAINER Casey Strouse <casey.strouse@gmail.com>
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -yqq --no-install-recommends \
   build-essential \
   ca-certificates \
   curl \
@@ -28,10 +28,11 @@ RUN pyenv global 2.7.13 && \
     pyenv local 2.7.13 3.5.2 && \
     pyenv rehash
 
-RUN pip install -r requirements.txt
-
 COPY . /icecake
 WORKDIR /icecake
 
-ENTRYPOINT ["make"]
-CMD ["build"]
+RUN pip install -r requirements.txt && \
+    pip install tox && \
+    pip install .
+
+CMD ["tox"]
