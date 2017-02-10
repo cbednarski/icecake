@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from codecs import open
 
 setup(
     # packaging information that is likely to be updated between versions
@@ -26,7 +27,7 @@ setup(
     author_email="banzaimonkey@gmail.com",
     description="An easy and cool static site generator",
     license="MIT",
-    long_description=open('README.rst').read(),
+    long_description=open('README.rst', encoding="utf-8").read(),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
