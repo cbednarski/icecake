@@ -651,9 +651,10 @@ class Server:
         HTTPHandler.site = self.site
         ui('Starting server on http://%s:%s/' % (address, port))
         ui('HEAD requests are omitted from the logs')
+        httpd = None
         while True:
-            httpd = HTTPServer((address, port), HTTPHandler)
             try:
+                httpd = HTTPServer((address, port), HTTPHandler)
                 httpd.serve_forever()
             except OSError:
                 ui('ERROR: Listen socket is busy; will retry in 5 seconds')
