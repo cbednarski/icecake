@@ -1,21 +1,23 @@
 pip=venv/bin/pip
 pytest=venv/bin/py.test
 python=venv/bin/python
+tox=venv/bin/tox
 
 build: init
-	pandoc -f markdown -t rst README.md > README.rst
 	$(python) generate.py
 	$(MAKE) test
+	pandoc -v && pandoc -f markdown -t rst README.md > README.rst
 
 init:
 	@if [ ! -d venv ]; then \
 		virtualenv venv ; \
 		$(pip) install -q -r requirements.txt ; \
 		$(pip) install -e . ; \
+		$(pip) install tox ; \
 	fi
 
 test: init
-	tox
+	$(tox)
 
 freeze:
 	$(pip) freeze > requirements.txt
@@ -31,6 +33,7 @@ clean:
 	rm -rf venv/
 	rm -rf .tox/
 	rm -rf .cache/
+	rm -rf .pytest_cache/
 
 clean-all: clean
 	rm -rf dist/
