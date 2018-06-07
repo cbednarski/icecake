@@ -17,4 +17,4 @@ And this is a list:
 - candy
 ```
 
-That's all for now!
+Here are some unicode characters: 😀 Ω 屋. That's all for now!
