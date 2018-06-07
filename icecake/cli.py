@@ -12,6 +12,7 @@ it sports the following features:
 - Automatically rebuilds when you edit things
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
+import codecs
 import platform
 import logging
 import os
@@ -84,7 +85,7 @@ class ContentCache:
         """
         file = join(self.root, filename)
         if isfile(file):
-            content = open(file).read()
+            content = codecs.open(file, encoding='utf-8').read()
             return content
         return None
 
@@ -286,7 +287,7 @@ class Page:
         target_dir = dirname(target)
         if not isdir(target_dir):
             os.makedirs(target_dir)
-        file = open(target, mode='w')
+        file = codecs.open(target, encoding='utf-8', mode='w')
         file.write(output)
         file.close()
 
@@ -316,7 +317,7 @@ class Page:
         """
         Read a file and return the Page created by passing it into parse_string
         """
-        content = open(filepath).read()
+        content = codecs.open(filepath, encoding='utf-8').read()
         page = cls.parse_string(filepath, site, content)
         return page
 
@@ -533,7 +534,7 @@ class Site:
             if not isdir(target_dir):
                 os.makedirs(target_dir)
 
-            with open(target, mode="w") as f:
+            with codecs.open(target, encoding='utf-8', mode="w") as f:
                 logging.debug("Writing %s" % target)
                 f.write(contents)
                 f.close()
