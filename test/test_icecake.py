@@ -1,7 +1,8 @@
+import codecs
 import pytest
 from icecake import cli
+from icecake.templates import templates
 import jinja2
-from templates import templates
 from os.path import abspath, dirname, isdir, isfile, join
 
 
@@ -25,7 +26,7 @@ class TestContentCache:
         cache = cli.ContentCache(join(module_root, 'templates'))
 
         # Read from content
-        helloworld = open(join(module_root, 'templates', 'content', 'articles', 'hello-world.md')).read()
+        helloworld = codecs.open(join(module_root, 'templates', 'content', 'articles', 'hello-world.md'), encoding='utf-8').read()
         assert cache.read('content/articles/hello-world.md') == helloworld
         assert cache.get('content/articles/hello-world.md') == helloworld
         cache.set('content/articles/hello-world.md', 'b')
@@ -214,7 +215,9 @@ class TestSite:
         site.get_pages()
         page = site.pages(path='articles/hello-world.md')[0]
         output = page.render()
-        assert output == open(join(test_root, 'fixtures', 'render', 'hello-world.md.html')).read()
+        # The source file has a trailing slash for git / unix reasons but this is dropped in the rendered version
+        output += "\n"
+        assert output == codecs.open(join(test_root, 'fixtures', 'render', 'hello-world.md.html'), encoding='utf-8').read()
 
     def test_build(self, tmpdir):
         site = cli.Site.initialize(tmpdir.strpath)
@@ -286,5 +289,5 @@ class TestTemplates:
     """
     def test_templates(self):
         for f in cli.ls_relative(join(module_root, 'templates')):
-            contents = open(join(module_root, 'templates', f)).read()
+            contents = codecs.open(join(module_root, 'templates', f), encoding='utf-8').read()
             assert templates[f] == contents

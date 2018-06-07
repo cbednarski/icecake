@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+
 templates = {
 "content/articles.html":
-"""{% extends "basic.html" %}
+u"""{% extends "basic.html" %}
 
 {% block title %}Articles :: My Site.com{% endblock %}
 
@@ -21,7 +23,7 @@ templates = {
 {% endblock %}
 """,
 "content/articles/hello-world.md":
-"""title = Hello world!
+u"""title = Hello world!
 date = 2016-04-02
 tags = hello
 ++++
@@ -40,9 +42,10 @@ And this is a list:
 - candy
 ```
 
-That's all for now!""",
+Here are some unicode characters: 😀 Ω 屋. That's all for now!
+""",
 "content/atom.xml":
-"""{{
+u"""{{
   site.atom(
     path="articles/",
     order="-date",
@@ -54,7 +57,7 @@ That's all for now!""",
   )
 }}""",
 "content/index.html":
-"""{% extends "basic.html" %}
+u"""{% extends "basic.html" %}
 
 {% block title %}My Site.com{% endblock %}
 
@@ -82,7 +85,7 @@ That's all for now!""",
 {% endblock %}
 """,
 "content/tags.html":
-"""{% extends "basic.html" %}
+u"""{% extends "basic.html" %}
 
 {% block title %}My Site.com{% endblock %}
 
@@ -106,7 +109,7 @@ That's all for now!""",
 {% endblock %}
 """,
 "layouts/basic.html":
-"""<!DOCTYPE html>
+u"""<!DOCTYPE html>
 <head>
   <title>{% block title %}{{ title }} :: My Site.com{% endblock %}</title>
   <link href="/css/main.css" rel="stylesheet" />
@@ -133,7 +136,7 @@ That's all for now!""",
 </html>
 """,
 "layouts/markdown.html":
-"""{% extends "basic.html" %}
+u"""{% extends "basic.html" %}
 
 {% block title %}{{ title }} :: My Site.com{% endblock %}
 
@@ -160,7 +163,7 @@ That's all for now!""",
 {% endblock %}
 """,
 "static/css/main.css":
-"""body {
+u"""body {
     background-color: #05b3e3;
     color: #000;
     font-family: Domine, "PT Serif", Georgia, "Times New Roman", serif;
@@ -387,7 +390,7 @@ ul.articles li, .tag-block li {
 }
 """,
 "static/css/syntax.css":
-""".codehilite .hll { background-color: #ffffcc }
+u""".codehilite .hll { background-color: #ffffcc }
 .codehilite .c { color: #0099FF; font-style: italic } /* Comment */
 .codehilite .err { color: #AA0000; background-color: #FFAAAA } /* Error */
 .codehilite .k { color: #006699; font-weight: bold } /* Keyword */
