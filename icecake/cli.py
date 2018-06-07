@@ -13,9 +13,10 @@ it sports the following features:
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import codecs
-import platform
 import logging
 import os
+import platform
+import posixpath
 from os.path import abspath, basename, dirname, exists, isdir, isfile, join, normpath, relpath, splitext
 from multiprocessing import Process
 import time
@@ -612,6 +613,20 @@ class Watcher:
 
 class HTTPHandler(SimpleHTTPRequestHandler):
     site = None
+
+    def guess_type(self, path):
+        base, ext = posixpath.splitext(path)
+        if ext == '.html':
+            return 'text/html; charset=utf-8'
+        if ext == '.css':
+            return 'text/css; charset=utf-8'
+        if ext == '.js':
+            return 'text/javascript; charset=utf-8'
+        if platform.python_version_tuple()[0] == '2':
+            return SimpleHTTPRequestHandler.guess_type(self, path)
+        else:
+            return super().guess_type(path)
+
 
     def translate_path(self, path):
         if platform.python_version_tuple()[0] == '2':
