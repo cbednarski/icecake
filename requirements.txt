@@ -1,5 +1,5 @@
 click==6.3
-Jinja2==2.8
+Jinja2==2.10.1
 Markdown==2.6.2
 Pygments==2.0.2
 python-dateutil==2.5.1
