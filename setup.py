@@ -4,7 +4,7 @@ from codecs import open
 setup(
     # packaging information that is likely to be updated between versions
     name='icecake',
-    version='0.6.0',
+    version='0.6.1',
     packages=['icecake'],
     py_modules=['cli', 'templates', 'livejs'],
     entry_points='''
@@ -24,7 +24,7 @@ setup(
     # pypy stuff that is not likely to change between versions
     url="https://github.com/cbednarski/icecake",
     author="Chris Bednarski",
-    author_email="banzaimonkey@gmail.com",
+    author_email="chris@cbednarski.com",
     description="An easy and cool static site generator",
     license="MIT",
     long_description=open('README.rst', encoding="utf-8").read(),
@@ -35,7 +35,7 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
     keywords="static site generator builder icecake"
 )

@@ -29,7 +29,7 @@ If these topics are new to you, keep reading for more details!
 
 > How do I get `pip`?
 
-`pip` usually comes with Python. If it's missing, you can get it [here](https://pip.pypa.io/en/stable/installing/#do-i-need-to-install-pip).
+`pip` usually comes with Python. If it's missing, you can get it [here](https://pip.pypa.io/en/stable/installing/#do-i-need-to-install-pip). Since python 2 is nearing end of life, you probably want to use `python3` to run `get-pip` to make sure `pip` uses `python3` under the hood.
 
 # Creating a Website
 
