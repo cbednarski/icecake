@@ -3,6 +3,6 @@ Jinja2==2.10.1
 Markdown==2.6.2
 Pygments==2.0.2
 python-dateutil==2.5.1
-Werkzeug==0.11.4
+Werkzeug==0.15.3
 pytest==2.9.1
 watchdog==0.8.3
